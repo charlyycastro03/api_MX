@@ -1,0 +1,29 @@
+-- database: api_mx
+
+CREATE DATABASE IF NOT EXISTS api_mx;
+USE api_mx;
+
+CREATE TABLE IF NOT EXISTS portfolios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS companies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  denue_id VARCHAR(50) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  activity VARCHAR(255),
+  phone VARCHAR(50),
+  email VARCHAR(100),
+  website VARCHAR(255),
+  address VARCHAR(255),
+  latitude DOUBLE,
+  longitude DOUBLE,
+  portfolio_id INT NOT NULL,
+  call_status VARCHAR(50) DEFAULT 'Pendiente',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
+);
