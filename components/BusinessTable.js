@@ -60,7 +60,7 @@ export default function BusinessTable({
       const phone = comp.Telefono || comp.phone || '';
       const email = comp.CorreoElectronico || comp.email || '';
       const website = comp.SitioInternet || comp.website || '';
-      const address = comp.address || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
+      const address = comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
       const estrato = comp.Estrato || comp.estrato || '';
 
       return [
@@ -132,7 +132,7 @@ export default function BusinessTable({
               const phone = comp.Telefono || comp.phone || '';
               const email = comp.CorreoElectronico || comp.email || '';
               const website = comp.SitioInternet || comp.website || '';
-              const address = comp.address || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
+              const address = comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
               
               const isSaved = savedCompanyIds.has(String(id));
 
@@ -217,7 +217,7 @@ export default function BusinessTable({
           const phone = comp.Telefono || comp.phone || '';
           const email = comp.CorreoElectronico || comp.email || '';
           const website = comp.SitioInternet || comp.website || '';
-          const address = comp.address || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
+          const address = comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
           
           const isSaved = savedCompanyIds.has(String(id));
 
@@ -334,6 +334,8 @@ export default function BusinessTable({
           flex-direction: column;
           gap: 15px;
           width: 100%;
+          min-width: 0;
+          overflow: hidden;
         }
         .table-actions-header {
           display: flex;
@@ -375,6 +377,9 @@ export default function BusinessTable({
             display: flex;
             flex-direction: column;
             gap: 12px;
+            min-width: 0;
+            width: 100%;
+            overflow: hidden;
           }
 
           .card-header-main {
@@ -389,6 +394,8 @@ export default function BusinessTable({
             font-weight: 700;
             color: var(--text-primary);
             line-height: 1.3;
+            word-wrap: break-word;
+            word-break: break-word;
           }
 
           .mobile-company-reason {
@@ -448,6 +455,8 @@ export default function BusinessTable({
           .address-value {
             color: var(--text-secondary);
             line-height: 1.4;
+            word-wrap: break-word;
+            word-break: break-word;
           }
 
           .mobile-contact-actions {

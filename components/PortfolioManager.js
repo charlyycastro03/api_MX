@@ -482,16 +482,24 @@ export default function PortfolioManager({
           gap: 20px;
           align-items: start;
           width: 100%;
+          min-width: 0;
+          overflow: hidden;
         }
         .crm-sidebar {
           padding: 20px;
           min-height: 500px;
+          min-width: 0;
+          width: 100%;
+          overflow: hidden;
         }
         .crm-main-panel {
           padding: 25px;
           min-height: 500px;
           display: flex;
           flex-direction: column;
+          min-width: 0;
+          width: 100%;
+          overflow: hidden;
         }
         .section-title {
           font-size: 15px;

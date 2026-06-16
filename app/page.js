@@ -154,7 +154,11 @@ export default function Home() {
 
     if (selectedMunicipalities.length > 0) {
       result = result.filter(c => {
-        const m = c.Municipio || c.municipio || '';
+        let m = c.Municipio || c.municipio || '';
+        if (!m && c.Ubicacion) {
+          const parts = c.Ubicacion.split(',');
+          m = parts[0].trim();
+        }
         return selectedMunicipalities.some(selected => m.toLowerCase() === selected.toLowerCase());
       });
     }
@@ -668,6 +672,9 @@ export default function Home() {
           display: flex;
           flex-direction: column;
           gap: 20px;
+          min-width: 0;
+          width: 100%;
+          overflow: hidden;
         }
         .search-filters-card {
           padding: 20px;
@@ -766,11 +773,17 @@ color: var(--accent-primary-text);
         .map-card {
           padding: 6px;
           height: 412px;
+          min-width: 0;
+          width: 100%;
+          overflow: hidden;
         }
         
         .results-table-card {
           padding: 25px;
           min-height: 600px;
+          min-width: 0;
+          width: 100%;
+          overflow: hidden;
         }
         .results-table-card .card-header {
           margin-bottom: 20px;
@@ -795,6 +808,8 @@ color: var(--accent-primary-text);
         }
         .crm-content-section {
           width: 100%;
+          min-width: 0;
+          overflow: hidden;
         }
         .crm-map-section {
           padding: 20px;
@@ -804,6 +819,9 @@ color: var(--accent-primary-text);
           gap: 15px;
           position: sticky;
           top: 20px;
+          min-width: 0;
+          width: 100%;
+          overflow: hidden;
         }
         .map-header h3 {
           font-size: 14px;
