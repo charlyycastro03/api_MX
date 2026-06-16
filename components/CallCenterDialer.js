@@ -56,7 +56,7 @@ export default function CallCenterDialer({ companies, onClose, onUpdateCompany }
           <div className="dialer-progress">
             Prospecto {currentIndex + 1} de {companies.length}
           </div>
-          <button className="btn-close" onClick={onClose}>✕ Cerrar</button>
+          <button className="btn-close" onClick={onClose}>Cerrar</button>
         </div>
 
         <div className="dialer-content">
@@ -74,7 +74,7 @@ export default function CallCenterDialer({ companies, onClose, onUpdateCompany }
                 <>
                   <div className="phone-number">{currentCompany.phone}</div>
                   <a href={`tel:${cleanPhone(currentCompany.phone)}`} className="btn-call">
-                    📞 Llamar Ahora
+                    Llamar Ahora
                   </a>
                 </>
               ) : (
@@ -84,10 +84,10 @@ export default function CallCenterDialer({ companies, onClose, onUpdateCompany }
 
             <div className="other-contacts">
               {currentCompany.email && (
-                <a href={`mailto:${currentCompany.email}`} className="contact-link">✉️ {currentCompany.email}</a>
+                <a href={`mailto:${currentCompany.email}`} className="contact-link">Email: {currentCompany.email}</a>
               )}
               {currentCompany.website && (
-                <a href={currentCompany.website.startsWith('http') ? currentCompany.website : `https://${currentCompany.website}`} target="_blank" rel="noopener noreferrer" className="contact-link">🌐 {currentCompany.website}</a>
+                <a href={currentCompany.website.startsWith('http') ? currentCompany.website : `https://${currentCompany.website}`} target="_blank" rel="noopener noreferrer" className="contact-link">Sitio Web: {currentCompany.website}</a>
               )}
             </div>
           </div>
@@ -100,10 +100,10 @@ export default function CallCenterDialer({ companies, onClose, onUpdateCompany }
                 onChange={(e) => handleStatusChange(e.target.value)}
                 className={`select-status ${getStatusClass(currentCompany.call_status)}`}
               >
-                <option value="Pendiente">⏳ Pendiente</option>
-                <option value="No contestó">📴 No contestó</option>
-                <option value="Contactado - Sin interés">❌ Sin interés</option>
-                <option value="Contactado - Interesado">🤝 Interesado</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="No contestó">No contestó</option>
+                <option value="Contactado - Sin interés">Sin interés</option>
+                <option value="Contactado - Interesado">Interesado</option>
               </select>
             </div>
 

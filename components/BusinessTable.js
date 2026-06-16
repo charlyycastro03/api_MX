@@ -110,7 +110,7 @@ export default function BusinessTable({
     <div className="table-wrapper">
       <div className="table-actions-header">
         <button onClick={exportToCSV} className="btn-action btn-secondary btn-export">
-          📥 Exportar a CSV
+          Exportar a CSV
         </button>
       </div>
       <div className="table-container desktop-only">
@@ -152,17 +152,17 @@ export default function BusinessTable({
                   <td className="contact-cell">
                     {phone && (
                       <a href={`tel:${cleanPhone(phone)}`} className="contact-link phone-link">
-                        📞 {phone}
+                        Tel: {phone}
                       </a>
                     )}
                     {email && (
                       <a href={`mailto:${email}`} className="contact-link email-link">
-                        ✉️ {email}
+                        Email: {email}
                       </a>
                     )}
                     {website && (
                       <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="contact-link web-link">
-                        🌐 Web
+                        Sitio Web
                       </a>
                     )}
                     {!phone && !email && !website && <span className="text-muted">Sin datos de contacto</span>}
@@ -173,12 +173,14 @@ export default function BusinessTable({
                         onClick={() => onSelectCompany(comp)} 
                         className="btn-action btn-secondary"
                         title="Ver en Mapa"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                       >
-                        📍 Ubicar
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        Ubicar
                       </button>
                       
                       {isSaved ? (
-                        <span className="saved-indicator">✓ Guardado</span>
+                        <span className="saved-indicator">Guardado</span>
                       ) : (
                         <div className="save-form-inline">
                           <select
@@ -236,7 +238,7 @@ export default function BusinessTable({
                   className="mobile-locate-btn"
                   title="Ver en Mapa"
                 >
-                  📍
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 </button>
               </div>
 
@@ -255,17 +257,17 @@ export default function BusinessTable({
                 <div className="mobile-contact-actions">
                   {phone && (
                     <a href={`tel:${cleanPhone(phone)}`} className="mobile-action-link phone">
-                      📞 Llamar
+                      Llamar
                     </a>
                   )}
                   {email && (
                     <a href={`mailto:${email}`} className="mobile-action-link email">
-                      ✉️ Correo
+                      Correo
                     </a>
                   )}
                   {website && (
                     <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="mobile-action-link web">
-                      🌐 Web
+                      Web
                     </a>
                   )}
                 </div>
@@ -275,7 +277,7 @@ export default function BusinessTable({
 
               <div className="card-footer-actions">
                 {isSaved ? (
-                  <span className="mobile-saved-badge">✓ Guardado</span>
+                  <span className="mobile-saved-badge">Guardado</span>
                 ) : (
                   <div className="mobile-save-group">
                     <select

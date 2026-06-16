@@ -269,14 +269,14 @@ export default function PortfolioManager({
                 disabled={companies.length === 0}
                 title="Exportar a Excel"
               >
-                📥 Exportar a CSV
+                Exportar a CSV
               </button>
               <button 
                 onClick={() => handleOpenDialer(false)} 
                 className="btn-action btn-primary btn-dialer"
                 disabled={companies.length === 0}
               >
-                📞 Call Center (Todos)
+                Call Center (Todos)
               </button>
               <button 
                 onClick={() => handleOpenDialer(true)} 
@@ -284,7 +284,7 @@ export default function PortfolioManager({
                 disabled={companies.length === 0}
                 title="Solo prospectos con teléfono o email"
               >
-                📱 Call Center (Con Contacto)
+                Call Center (Con Contacto)
               </button>
             </div>
 
@@ -334,7 +334,9 @@ export default function PortfolioManager({
               </div>
             ) : companies.length === 0 ? (
               <div className="panel-empty">
-                <div className="empty-icon">📁</div>
+                <div className="empty-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
                 <p>Este portafolio está vacío.</p>
                 <span className="help-text">Realiza una búsqueda de empresas en la API y utiliza la opción "Guardar" para añadirlas aquí.</span>
               </div>
@@ -404,10 +406,10 @@ export default function PortfolioManager({
                             onChange={(e) => handleCallStatusChange(company.id, e.target.value)}
                             className={`select-status ${getStatusClass(company.call_status)}`}
                           >
-                            <option value="Pendiente">⏳ Pendiente</option>
-                            <option value="No contestó">📴 No contestó</option>
-                            <option value="Contactado - Sin interés">❌ Sin interés</option>
-                            <option value="Contactado - Interesado">🤝 Interesado</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="No contestó">No contestó</option>
+                            <option value="Contactado - Sin interés">Sin interés</option>
+                            <option value="Contactado - Interesado">Interesado</option>
                           </select>
                         </div>
 
@@ -447,7 +449,10 @@ export default function PortfolioManager({
                               ) : (
                                 <span className="notes-placeholder">Haz clic para agregar notas de seguimiento...</span>
                               )}
-                              <span className="edit-hint">✏️ Editar</span>
+                              <span className="edit-hint" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                Editar
+                              </span>
                             </div>
                           )}
                         </div>
@@ -460,7 +465,9 @@ export default function PortfolioManager({
           </>
         ) : (
           <div className="panel-empty">
-            <div className="empty-icon">📁</div>
+            <div className="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            </div>
             <p>No hay ningún portafolio seleccionado.</p>
             <span className="help-text">Crea un portafolio en la barra lateral para comenzar a prospectar.</span>
           </div>
@@ -1036,8 +1043,10 @@ color: var(--accent-primary-text);
             font-size: 14px;
           }
           .crm-flow {
+            display: flex;
             flex-direction: column;
             gap: 12px;
+            width: 100%;
           }
           .status-selector, .notes-editor {
             width: 100%;

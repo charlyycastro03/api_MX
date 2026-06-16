@@ -155,11 +155,14 @@ export default function Home() {
     if (selectedMunicipalities.length > 0) {
       result = result.filter(c => {
         let m = c.Municipio || c.municipio || '';
-        if (!m && c.Ubicacion) {
-          const parts = c.Ubicacion.split(',');
-          m = parts[0].trim();
+        if (m) {
+          return selectedMunicipalities.some(selected => m.toLowerCase() === selected.toLowerCase());
         }
-        return selectedMunicipalities.some(selected => m.toLowerCase() === selected.toLowerCase());
+        if (c.Ubicacion) {
+          const parts = c.Ubicacion.split(',').map(p => p.trim().toLowerCase());
+          return selectedMunicipalities.some(selected => parts.includes(selected.toLowerCase()));
+        }
+        return false;
       });
     }
 
@@ -380,13 +383,13 @@ export default function Home() {
           className={`nav-tab-btn ${activeTab === 'search' ? 'active' : ''}`}
           onClick={() => setActiveTab('search')}
         >
-          🔍 Buscador de Empresas
+          Buscador de Empresas
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'crm' ? 'active' : ''}`}
           onClick={() => setActiveTab('crm')}
         >
-          📂 Mis Portafolios (CRM)
+          Mis Portafolios (CRM)
         </button>
       </nav>
 
@@ -926,6 +929,8 @@ color: var(--accent-primary-text);
           }
           
           .crm-layout-grid {
+            display: flex;
+            flex-direction: column;
             gap: 15px;
           }
           
