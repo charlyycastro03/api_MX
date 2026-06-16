@@ -1,95 +1,49 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Map({ companies = [], activeCompany = null }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+  const leafletRef = useRef(null);
+  const [mapReady, setMapReady] = useState(false);
 
+  // 1. Initialize Leaflet map once on mount
   useEffect(() => {
     let isMounted = true;
-    let LInstance;
 
     async function initMap() {
       if (typeof window === 'undefined') return;
-      
+      if (mapInstanceRef.current) return; // Already initialized
+
       const Leaflet = await import('leaflet');
-      LInstance = Leaflet.default;
-
       if (!isMounted || !mapRef.current) return;
-
-      // Clean up existing map instance if any
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-
-      // Default coordinates: Center of Mexico (23.6345, -102.5528)
-      // Check if we have valid coordinates in companies
-      const validCompanies = companies.filter(c => c.Latitude || c.latitude || c.Latitud);
       
-      let center = [23.6345, -102.5528];
-      let zoom = 5;
+      leafletRef.current = Leaflet.default;
+      const L = leafletRef.current;
 
-      if (activeCompany && (activeCompany.latitude || activeCompany.Latitude || activeCompany.Latitud)) {
-        const lat = activeCompany.latitude || activeCompany.Latitude || activeCompany.Latitud;
-        const lng = activeCompany.longitude || activeCompany.Longitude || activeCompany.Longitud;
-        center = [parseFloat(lat), parseFloat(lng)];
-        zoom = 15;
-      } else if (validCompanies.length > 0) {
-        const first = validCompanies[0];
-        const lat = first.latitude || first.Latitude || first.Latitud;
-        const lng = first.longitude || first.Longitude || first.Longitud;
-        center = [parseFloat(lat), parseFloat(lng)];
-        zoom = 12;
-      }
+      // Center of Mexico
+      const center = [23.6345, -102.5528];
+      const zoom = 5;
 
-      mapInstanceRef.current = LInstance.map(mapRef.current).setView(center, zoom);
+      mapInstanceRef.current = L.map(mapRef.current).setView(center, zoom);
 
-      // Add dark-themed tiles (using CartoDB Dark Matter tiles which fits our premium dark theme beautifully)
-      LInstance.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      // Dark-themed tiles
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 20
       }).addTo(mapInstanceRef.current);
 
       // Fix default marker icon path issues
-      delete LInstance.Icon.Default.prototype._getIconUrl;
-      LInstance.Icon.Default.mergeOptions({
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      // Clear markers
-      markersRef.current = [];
-
-      // Add markers
-      companies.forEach((company) => {
-        const lat = company.latitude || company.Latitude || company.Latitud;
-        const lng = company.longitude || company.Longitude || company.Longitud;
-        if (!lat || !lng) return;
-
-        const name = company.name || company.Nombre || company.RazonSocial;
-        const activity = company.activity || company.ClaseActividad || '';
-        const address = company.address || `${company.Calle || ''} ${company.NumExterior || ''}, ${company.Colonia || ''}, ${company.Municipio || ''}`;
-        const phone = company.phone || company.Telefono || '';
-        const id = company.id || company.denue_id || company.Id || company.ID;
-
-        // Custom icon color or glow can be configured if needed, standard marker works fine
-        const marker = LInstance.marker([parseFloat(lat), parseFloat(lng)])
-          .addTo(mapInstanceRef.current)
-          .bindPopup(`
-            <div style="font-family: var(--font-sans); color: #f8fafc; padding: 2px;">
-              <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600; color: #f8fafc;">${name}</h4>
-              <p style="margin: 0 0 4px 0; font-size: 11px; color: #94a3b8; line-height: 1.3;">${activity}</p>
-              <p style="margin: 0 0 8px 0; font-size: 10px; color: #64748b; line-height: 1.3;">${address}</p>
-              ${phone ? `<a href="tel:${phone}" style="display: inline-block; padding: 4px 8px; background: #6366f1; color: white; text-decoration: none; border-radius: 4px; font-size: 10px; font-weight: 600;">📞 Llamar: ${phone}</a>` : ''}
-            </div>
-          `);
-
-        markersRef.current.push({ id, marker });
-      });
+      setMapReady(true);
     }
 
     initMap();
@@ -101,30 +55,87 @@ export default function Map({ companies = [], activeCompany = null }) {
         mapInstanceRef.current = null;
       }
     };
-  }, [companies]);
+  }, []);
 
-  // Handle active marker trigger
+  // 2. Handle markers updates and flyTo when activeCompany or companies list change
   useEffect(() => {
-    if (!mapInstanceRef.current || !activeCompany) return;
-    
-    const lat = activeCompany.latitude || activeCompany.Latitude || activeCompany.Latitud;
-    const lng = activeCompany.longitude || activeCompany.Longitude || activeCompany.Longitud;
-    if (!lat || !lng) return;
+    const L = leafletRef.current;
+    const map = mapInstanceRef.current;
+    if (!L || !map || !mapReady) return;
 
-    mapInstanceRef.current.flyTo([parseFloat(lat), parseFloat(lng)], 16, {
-      duration: 1.2
+    // Clear existing markers from map
+    markersRef.current.forEach(({ marker }) => {
+      map.removeLayer(marker);
+    });
+    markersRef.current = [];
+
+    // Get all unique companies to render
+    const companiesToRender = [...companies];
+    if (activeCompany) {
+      const activeId = activeCompany.id || activeCompany.denue_id || activeCompany.Id || activeCompany.ID;
+      const alreadyIncluded = companiesToRender.some(c => {
+        const cId = c.id || c.denue_id || c.Id || c.ID;
+        return cId && activeId && String(cId) === String(activeId);
+      });
+      if (!alreadyIncluded) {
+        companiesToRender.push(activeCompany);
+      }
+    }
+
+    // Add new markers to map
+    companiesToRender.forEach((company) => {
+      const lat = company.latitude || company.Latitude || company.Latitud;
+      const lng = company.longitude || company.Longitude || company.Longitud;
+      if (!lat || !lng) return;
+
+      const name = company.name || company.Nombre || company.RazonSocial;
+      const activity = company.activity || company.ClaseActividad || '';
+      const address = company.address || `${company.Calle || ''} ${company.NumExterior || ''}, ${company.Colonia || ''}, ${company.Municipio || ''}`;
+      const phone = company.phone || company.Telefono || '';
+      const id = company.id || company.denue_id || company.Id || company.ID;
+
+      const marker = L.marker([parseFloat(lat), parseFloat(lng)])
+        .addTo(map)
+        .bindPopup(`
+          <div style="font-family: var(--font-sans); color: #f8fafc; padding: 2px;">
+            <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600; color: #f8fafc;">${name}</h4>
+            <p style="margin: 0 0 4px 0; font-size: 11px; color: #94a3b8; line-height: 1.3;">${activity}</p>
+            <p style="margin: 0 0 8px 0; font-size: 10px; color: #64748b; line-height: 1.3;">${address}</p>
+            ${phone ? `<a href="tel:${phone}" style="display: inline-block; padding: 4px 8px; background: #6366f1; color: white; text-decoration: none; border-radius: 4px; font-size: 10px; font-weight: 600;">📞 Llamar: ${phone}</a>` : ''}
+          </div>
+        `);
+
+      markersRef.current.push({ id, marker });
     });
 
-    const id = activeCompany.id || activeCompany.denue_id || activeCompany.Id || activeCompany.ID;
-    const match = markersRef.current.find(m => m.id === id);
-    if (match) {
-      setTimeout(() => {
-        if (match.marker) {
-          match.marker.openPopup();
+    // Fly to active company or center to first company
+    if (activeCompany) {
+      const lat = activeCompany.latitude || activeCompany.Latitude || activeCompany.Latitud;
+      const lng = activeCompany.longitude || activeCompany.Longitude || activeCompany.Longitud;
+      if (lat && lng) {
+        map.flyTo([parseFloat(lat), parseFloat(lng)], 16, {
+          duration: 1.2
+        });
+
+        const activeId = activeCompany.id || activeCompany.denue_id || activeCompany.Id || activeCompany.ID;
+        const match = markersRef.current.find(m => m.id === activeId);
+        if (match) {
+          setTimeout(() => {
+            if (match.marker) {
+              match.marker.openPopup();
+            }
+          }, 1200); // Wait for the flyTo animation to finish before opening popup
         }
-      }, 500);
+      }
+    } else if (companies.length > 0) {
+      const valid = companies.find(c => c.latitude || c.Latitude || c.Latitud);
+      if (valid) {
+        const lat = valid.latitude || valid.Latitude || valid.Latitud;
+        const lng = valid.longitude || valid.Longitude || valid.Longitud;
+        map.setView([parseFloat(lat), parseFloat(lng)], 12);
+      }
     }
-  }, [activeCompany]);
+  }, [companies, activeCompany, mapReady]);
 
   return (
     <div style={{ width: '100%', height: '100%', minHeight: '400px', position: 'relative' }}>
