@@ -113,7 +113,7 @@ export default function BusinessTable({
           📥 Exportar a CSV
         </button>
       </div>
-      <div className="table-container">
+      <div className="table-container desktop-only">
         <table>
           <thead>
             <tr>
@@ -209,6 +209,100 @@ export default function BusinessTable({
         </table>
       </div>
 
+      <div className="mobile-cards-list mobile-only">
+        {currentItems.map((comp) => {
+          const id = comp.Id || comp.id || comp.denue_id || comp.ID;
+          const name = comp.Nombre || comp.name || comp.RazonSocial;
+          const activity = comp.ClaseActividad || comp.activity || 'No especificada';
+          const phone = comp.Telefono || comp.phone || '';
+          const email = comp.CorreoElectronico || comp.email || '';
+          const website = comp.SitioInternet || comp.website || '';
+          const address = comp.address || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
+          
+          const isSaved = savedCompanyIds.has(String(id));
+
+          return (
+            <div key={id} className="mobile-business-card glass-panel">
+              <div className="card-header-main">
+                <div className="name-section">
+                  <div className="mobile-company-name">{name}</div>
+                  {comp.RazonSocial && comp.RazonSocial !== name && (
+                    <div className="mobile-company-reason">{comp.RazonSocial}</div>
+                  )}
+                  <span className="estrato-badge">{comp.Estrato || comp.estrato || '1-5 personas'}</span>
+                </div>
+                <button 
+                  onClick={() => onSelectCompany(comp)} 
+                  className="mobile-locate-btn"
+                  title="Ver en Mapa"
+                >
+                  📍
+                </button>
+              </div>
+
+              <div className="card-details">
+                <div className="detail-row">
+                  <span className="detail-label">Actividad:</span>
+                  <span className="detail-value">{activity}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Dirección:</span>
+                  <span className="detail-value address-value">{address}</span>
+                </div>
+              </div>
+
+              {(phone || email || website) ? (
+                <div className="mobile-contact-actions">
+                  {phone && (
+                    <a href={`tel:${cleanPhone(phone)}`} className="mobile-action-link phone">
+                      📞 Llamar
+                    </a>
+                  )}
+                  {email && (
+                    <a href={`mailto:${email}`} className="mobile-action-link email">
+                      ✉️ Correo
+                    </a>
+                  )}
+                  {website && (
+                    <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="mobile-action-link web">
+                      🌐 Web
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <div className="no-contact-info">Sin datos de contacto</div>
+              )}
+
+              <div className="card-footer-actions">
+                {isSaved ? (
+                  <span className="mobile-saved-badge">✓ Guardado</span>
+                ) : (
+                  <div className="mobile-save-group">
+                    <select
+                      value={selectedPortfolioForCompany[id] || ''}
+                      onChange={(e) => handlePortfolioSelect(id, e.target.value)}
+                      className="mobile-select-portfolio"
+                    >
+                      <option value="">Guardar en...</option>
+                      {portfolios.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => handleSave(comp, id)}
+                      disabled={savingId === id || !selectedPortfolioForCompany[id]}
+                      className="mobile-save-btn btn-primary"
+                    >
+                      {savingId === id ? '...' : 'Guardar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Pagination UI */}
       {totalPages > 1 && (
         <div className="pagination">
@@ -255,6 +349,195 @@ export default function BusinessTable({
           background: rgba(16, 185, 129, 0.2);
           border-color: #10b981;
         }
+        
+        .desktop-only {
+          display: block;
+        }
+        .mobile-only {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .desktop-only {
+            display: none;
+          }
+          .mobile-only {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          
+          .mobile-business-card {
+            background: rgba(18, 25, 45, 0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .card-header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+          }
+
+          .mobile-company-name {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3;
+          }
+
+          .mobile-company-reason {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+          }
+
+          .mobile-locate-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--panel-border);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-fast);
+          }
+          
+          .mobile-locate-btn:active {
+            transform: scale(0.9);
+            background: var(--accent-secondary);
+          }
+
+          .card-details {
+            font-size: 12.5px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 10px;
+          }
+
+          .detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+          }
+
+          .detail-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+          }
+
+          .detail-value {
+            color: var(--text-primary);
+          }
+
+          .address-value {
+            color: var(--text-secondary);
+            line-height: 1.4;
+          }
+
+          .mobile-contact-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+          }
+
+          .mobile-action-link {
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+            padding: 9px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--panel-border);
+          }
+
+          .mobile-action-link:active {
+            background: var(--accent-secondary);
+          }
+
+          .no-contact-info {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--panel-border);
+          }
+
+          .card-footer-actions {
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 12px;
+            margin-top: 4px;
+          }
+
+          .mobile-saved-badge {
+            display: block;
+            text-align: center;
+            font-size: 12px;
+            color: var(--accent-success);
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+          }
+
+          .mobile-save-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+          }
+
+          .mobile-select-portfolio {
+            flex: 1;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            font-size: 12px;
+            outline: none;
+          }
+
+          .mobile-save-btn {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-fast);
+          }
+          .mobile-save-btn:active {
+            transform: scale(0.95);
+          }
+        }
+
         .table-container {
           width: 100%;
           overflow-x: auto;
@@ -262,12 +545,14 @@ export default function BusinessTable({
           border: 1px solid var(--panel-border);
           background: rgba(12, 18, 34, 0.4);
         }
+
         table {
           width: 100%;
           border-collapse: collapse;
           text-align: left;
           font-size: 13.5px;
         }
+
         th {
           background: var(--bg-tertiary);
           padding: 14px 18px;

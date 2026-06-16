@@ -951,6 +951,90 @@ color: var(--accent-primary-text);
         .btn-cancel-notes:hover {
           background: rgba(255, 255, 255, 0.05);
         }
+
+        @media (max-width: 768px) {
+          .crm-container {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+          .crm-sidebar {
+            min-height: auto;
+            padding: 15px;
+            border-radius: var(--radius-md);
+          }
+          .portfolio-list {
+            flex-direction: row;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            gap: 8px;
+            scrollbar-width: none;
+          }
+          .portfolio-list::-webkit-scrollbar {
+            display: none;
+          }
+          .portfolio-item {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--panel-border);
+          }
+          .portfolio-name {
+            max-width: 110px;
+          }
+          .btn-delete-port {
+            opacity: 1;
+            margin-left: 4px;
+          }
+          .crm-main-panel {
+            padding: 15px;
+            min-height: auto;
+            border-radius: var(--radius-md);
+          }
+          .panel-header {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+          }
+          .panel-header h2 {
+            font-size: 18px;
+          }
+          .btn-action {
+            width: 100%;
+            text-align: center;
+          }
+          .btn-export {
+            margin-bottom: 4px;
+          }
+          .btn-dialer {
+            margin-left: 0;
+            margin-bottom: 4px;
+          }
+          .crm-filters-bar {
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+          }
+          .filter-group {
+            width: 100%;
+            min-width: 100%;
+          }
+          .crm-card {
+            padding: 14px;
+          }
+          .crm-card-header {
+            align-items: flex-start;
+          }
+          .company-meta h3 {
+            font-size: 14px;
+          }
+          .crm-flow {
+            flex-direction: column;
+            gap: 12px;
+          }
+          .status-selector, .notes-editor {
+            width: 100%;
+          }
+        }
       `}</style>
     </div>
   );

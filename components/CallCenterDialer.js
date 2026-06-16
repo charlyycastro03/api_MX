@@ -387,8 +387,38 @@ export default function CallCenterDialer({ companies, onClose, onUpdateCompany }
         .indicator.contacted {
           background: var(--accent-success);
         }
-        .indicator.contacted.active {
-          background: #34d399;
+        @media (max-width: 768px) {
+          .dialer-overlay {
+            padding: 0;
+            background: var(--bg-primary);
+          }
+          .dialer-modal {
+            max-width: 100%;
+            height: 100%;
+            border-radius: 0;
+            border: none;
+          }
+          .dialer-content {
+            grid-template-columns: 1fr;
+            padding: 20px;
+            overflow-y: auto;
+            gap: 20px;
+            max-height: calc(100vh - 140px);
+          }
+          .phone-number {
+            font-size: 28px;
+          }
+          .dial-box {
+            padding: 15px;
+          }
+          .nav-indicators {
+            max-width: 120px;
+          }
+          .dialer-footer {
+            padding: 15px 20px;
+            background: rgba(10, 10, 10, 0.95);
+            border-top: 1px solid var(--panel-border);
+          }
         }
       `}</style>
     </div>

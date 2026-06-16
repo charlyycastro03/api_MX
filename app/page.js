@@ -829,6 +829,95 @@ color: var(--accent-primary-text);
             height: 400px;
           }
         }
+
+        @media (max-width: 768px) {
+          .dashboard-layout {
+            padding: 12px;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
+            gap: 15px;
+          }
+          
+          .dashboard-header {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 14px 16px;
+            gap: 12px;
+            border-radius: var(--radius-md);
+          }
+          
+          .header-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+          }
+          
+          .token-input-wrapper {
+            width: 100%;
+            justify-content: center;
+          }
+          
+          .token-input {
+            flex: 1;
+            width: 100%;
+          }
+          
+          .btn-small {
+            text-align: center;
+            padding: 10px;
+            width: 100%;
+          }
+          
+          .dashboard-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--panel-border);
+            border-radius: 0;
+            padding: 8px 12px calc(8px + env(safe-area-inset-bottom)) 12px;
+            margin: 0;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.6);
+          }
+          
+          .nav-tab-btn {
+            padding: 12px 10px;
+            font-size: 13px;
+          }
+          
+          .search-layout-grid {
+            gap: 15px;
+          }
+          
+          .filters-map-column {
+            gap: 15px;
+          }
+          
+          .map-card {
+            height: 280px;
+          }
+          
+          .results-table-card {
+            padding: 15px;
+            min-height: auto;
+            border-radius: var(--radius-md);
+          }
+          
+          .crm-layout-grid {
+            gap: 15px;
+          }
+          
+          .crm-map-section {
+            height: 280px;
+            order: -1; /* Place map at the top of the CRM list on mobile */
+            position: relative;
+            top: 0;
+          }
+        }
       `}</style>
     </div>
   );
