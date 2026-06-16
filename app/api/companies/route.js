@@ -14,32 +14,37 @@ export async function GET(request) {
       return NextResponse.json({ error: 'portfolioId es requerido.' }, { status: 400 });
     }
     
-    let query = 'SELECT * FROM companies WHERE portfolio_id = ?';
+    let paramIndex = 1;
+    let query = `SELECT * FROM companies WHERE portfolio_id = $${paramIndex}`;
     const params = [portfolioId];
 
     if (status && status !== 'Todos') {
-      query += ' AND call_status = ?';
+      paramIndex++;
+      query += ` AND call_status = $${paramIndex}`;
       params.push(status);
     }
 
     if (activity) {
-      query += ' AND activity LIKE ?';
+      paramIndex++;
+      query += ` AND activity ILIKE $${paramIndex}`;
       params.push(`%${activity}%`);
     }
 
     if (startDate) {
-      query += ' AND created_at >= ?';
+      paramIndex++;
+      query += ` AND created_at >= CAST($${paramIndex} AS TIMESTAMP)`;
       params.push(startDate + ' 00:00:00');
     }
 
     if (endDate) {
-      query += ' AND created_at <= ?';
+      paramIndex++;
+      query += ` AND created_at <= CAST($${paramIndex} AS TIMESTAMP)`;
       params.push(endDate + ' 23:59:59');
     }
 
     query += ' ORDER BY created_at DESC';
 
-    const [rows] = await pool.query(query, params);
+    const { rows } = await pool.query(query, params);
     return NextResponse.json(rows);
   } catch (error) {
     console.error('Error fetching companies:', error);
@@ -59,23 +64,34 @@ export async function POST(request) {
     }
 
     // Check if company already exists in this portfolio
-    const [existing] = await pool.query(
-      'SELECT id FROM companies WHERE denue_id = ? AND portfolio_id = ?',
+    const { rows: existing } = await pool.query(
+      'SELECT id FROM companies WHERE denue_id = $1 AND portfolio_id = $2',
       [denueId, portfolioId]
     );
     if (existing.length > 0) {
       return NextResponse.json({ error: 'Esta empresa ya está guardada en este portafolio.' }, { status: 400 });
     }
     
-    const [result] = await pool.query(
+    const { rows } = await pool.query(
       `INSERT INTO companies 
        (denue_id, name, activity, phone, email, website, address, latitude, longitude, portfolio_id, call_status, notes) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', '')`,
-      [denueId, name, activity || '', phone || '', email || '', website || '', address || '', latitude || null, longitude || null, portfolioId]
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Pendiente', '') RETURNING id`,
+      [
+        denueId, 
+        name, 
+        activity || '', 
+        phone || '', 
+        email || '', 
+        website || '', 
+        address || '', 
+        latitude !== undefined && latitude !== null ? parseFloat(latitude) : null, 
+        longitude !== undefined && longitude !== null ? parseFloat(longitude) : null, 
+        portfolioId
+      ]
     );
     
     return NextResponse.json({ 
-      id: result.insertId, 
+      id: rows[0].id, 
       denue_id: denueId, 
       name, 
       activity: activity || '',
@@ -83,8 +99,8 @@ export async function POST(request) {
       email: email || '',
       website: website || '',
       address: address || '',
-      latitude: latitude || null,
-      longitude: longitude || null,
+      latitude: latitude !== undefined && latitude !== null ? parseFloat(latitude) : null,
+      longitude: longitude !== undefined && longitude !== null ? parseFloat(longitude) : null,
       portfolio_id: portfolioId, 
       call_status: 'Pendiente', 
       notes: '' 
@@ -107,14 +123,17 @@ export async function PUT(request) {
     let query = 'UPDATE companies SET ';
     const params = [];
     const fields = [];
+    let paramIndex = 0;
     
     if (callStatus !== undefined) {
-      fields.push('call_status = ?');
+      paramIndex++;
+      fields.push(`call_status = $${paramIndex}`);
       params.push(callStatus);
     }
     
     if (notes !== undefined) {
-      fields.push('notes = ?');
+      paramIndex++;
+      fields.push(`notes = $${paramIndex}`);
       params.push(notes);
     }
     
@@ -122,7 +141,8 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'No hay campos para actualizar.' }, { status: 400 });
     }
     
-    query += fields.join(', ') + ' WHERE id = ?';
+    paramIndex++;
+    query += fields.join(', ') + ` WHERE id = $${paramIndex}`;
     params.push(id);
     
     await pool.query(query, params);
@@ -142,7 +162,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'ID de la empresa es requerido.' }, { status: 400 });
     }
     
-    await pool.query('DELETE FROM companies WHERE id = ?', [id]);
+    await pool.query('DELETE FROM companies WHERE id = $1', [id]);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting company:', error);

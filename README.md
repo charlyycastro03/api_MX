@@ -15,7 +15,7 @@ Aplicación web para la búsqueda de unidades económicas en México a través d
     *   Enlaces directos de marcación telefónica (`tel:`).
     *   Gestión y actualización del estatus de llamada (Pendiente, No contestó, Sin interés, Interesado).
     *   Registro de notas y comentarios de seguimiento por empresa.
-*   **Persistencia Local:** Conexión a base de datos MySQL local para registrar y resguardar la actividad del CRM.
+*   **Persistencia de Datos:** Conexión a base de datos PostgreSQL (local o externa como Supabase) para registrar y resguardar la actividad del CRM.
 
 ---
 
@@ -39,7 +39,7 @@ Aplicación web para la búsqueda de unidades económicas en México a través d
 ## Tecnologías Utilizadas
 
 *   **Frontend y Backend:** Next.js (App Router, React 19)
-*   **Base de Datos:** MySQL (conector nativo `mysql2`)
+*   **Base de Datos:** PostgreSQL (usando el cliente nativo `pg`)
 *   **Mapas:** Leaflet.js y OpenStreetMap
 *   **Estilos:** CSS Vanilla (Variables CSS, Flexbox, Grid)
 
@@ -50,18 +50,15 @@ Aplicación web para la búsqueda de unidades económicas en México a través d
 ### 1. Requisitos Previos
 
 *   Node.js v18 o superior.
-*   Servidor MySQL en ejecución.
+*   Instancia de PostgreSQL activa (local o remota en proveedores como Supabase).
 
 ### 2. Variables de Entorno
 
 Cree un archivo `.env` en la raíz del proyecto basándose en la siguiente plantilla:
 
 ```env
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=tu_contraseña
-DB_NAME=api_mx
+# URL de conexión de PostgreSQL (ej. Supabase)
+DATABASE_URL=postgresql://usuario:contraseña@host:puerto/nombre_bd?sslmode=require
 
 # Token de acceso a la API del INEGI
 DENUE_API_TOKEN=
@@ -70,11 +67,10 @@ DENUE_API_TOKEN=
 ### 3. Inicialización de la Base de Datos
 
 La aplicación cuenta con inicialización automática. Al iniciar el servidor y recibir la primera petición, el backend:
-1.  Verificará la conexión con el servidor MySQL.
-2.  Creará la base de datos `api_mx` en caso de no existir.
-3.  Ejecutará el esquema de base de datos para generar las tablas `portfolios` y `companies`.
+1.  Verificará la conexión con la base de datos PostgreSQL mediante la cadena de conexión.
+2.  Ejecutará automáticamente el esquema de base de datos para generar las tablas `portfolios` y `companies` si estas no existen.
 
-*Nota: Si requiere inicializar manualmente la base de datos, ejecute el archivo SQL ubicado en `lib/schema.sql`.*
+*Nota: Si requiere inicializar manualmente la base de datos, el archivo de esquema SQL se encuentra ubicado en `lib/schema.sql`.*
 
 ### 4. Obtención del Token de INEGI DENUE
 
@@ -101,5 +97,5 @@ Para desplegar la aplicación en Vercel:
 
 1.  Suba el código al repositorio de GitHub: `https://github.com/charlyycastro03/api_MX.git`.
 2.  Importe el proyecto desde la consola de Vercel.
-3.  Configure las variables de entorno en Vercel con los datos de producción de su base de datos y su token del INEGI (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DENUE_API_TOKEN`).
+3.  Configure las variables de entorno en Vercel con la cadena de conexión de Supabase y tu token del INEGI (`DATABASE_URL`, `DENUE_API_TOKEN`).
 4.  Ejecute el despliegue.
