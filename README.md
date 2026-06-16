@@ -1,108 +1,105 @@
-# ProspectaMX - CRM & Visualizador DENUE (INEGI)
+# ProspectaMX - CRM y Visualizador DENUE (INEGI)
 
-Una aplicación web moderna, responsiva y de alto impacto estético, diseñada para buscar unidades económicas en México a través de la API oficial de **DENUE (INEGI)**, visualizar sus ubicaciones en un mapa interactivo y gestionar portafolios de prospectos con un CRM integrado para realizar llamadas de ventas, guardar estatus y agregar notas de seguimiento.
-
----
-
-## 🚀 Características Principales
-
-*   **Buscador Integrado:** Filtrado geográfico por entidad federativa (32 estados) y por tamaño de empresa (Estrato).
-*   **Bypass de CORS Seguro:** Un proxy backend de Next.js se encarga de retransmitir las llamadas de la API de INEGI evitando problemas de CORS y protegiendo tu token de acceso.
-*   **Mapa Interactivo Premium:** Integración fluida con Leaflet.js y capas oscuras (CartoDB Dark Matter) para ubicar geográficamente cada negocio en tiempo real.
-*   **CRM de Ventas / Portafolios:**
-    *   Creación, edición y eliminación de portafolios personalizados (ej. "Hoteles en Cancún", "Fábricas en NL").
-    *   Añadir prospectos desde el buscador a portafolios con un solo clic.
-    *   Marcación telefónica directa con enlaces rápidos (`tel:`).
-    *   Gestión de estatus de llamadas mediante colores: *Pendiente*, *No contestó*, *Sin interés* e *Interesado*.
-    *   Editor de notas y comentarios de seguimiento para cada prospecto.
-*   **Persistencia en MySQL:** Conexión a base de datos MySQL local para registrar y resguardar toda la actividad del CRM.
+Aplicación web para la búsqueda de unidades económicas en México a través de la API de DENUE (INEGI), visualización geográfica en un mapa interactivo y gestión de portafolios de prospectos mediante un CRM local.
 
 ---
 
-## ✨ Últimas Mejoras e Innovaciones (UX/UI & Rendimiento)
+## Características Principales
 
-Recientemente se han implementado mejoras críticas para llevar la aplicación a un nivel de madurez de software de producción:
+*   **Buscador Integrado:** Filtrado geográfico por entidad federativa y por tamaño de empresa (estrato).
+*   **Proxy de API:** Backend en Next.js para retransmitir las llamadas a la API del INEGI, resolviendo problemas de CORS y evitando exponer el token de acceso en el cliente.
+*   **Visualización en Mapa:** Integración con Leaflet.js para ubicar geográficamente cada negocio en tiempo real sobre capas de mapas optimizadas.
+*   **CRM y Portafolios:**
+    *   Creación, edición y eliminación de portafolios de prospectos.
+    *   Asociación directa de prospectos desde el buscador a portafolios específicos.
+    *   Enlaces directos de marcación telefónica (`tel:`).
+    *   Gestión y actualización del estatus de llamada (Pendiente, No contestó, Sin interés, Interesado).
+    *   Registro de notas y comentarios de seguimiento por empresa.
+*   **Persistencia Local:** Conexión a base de datos MySQL local para registrar y resguardar la actividad del CRM.
+
+---
+
+## Mejoras de Arquitectura y Rendimiento
 
 *   **Buscador Multi-Giro y Multi-Municipio:**
-    *   Soporte para seleccionar múltiples giros (sectores de actividad) y múltiples municipios simultáneamente.
-    *   Ejecución paralela de peticiones al backend para recolectar información de múltiples criterios de forma ágil.
+    *   Permite seleccionar múltiples giros de actividad y municipios de forma simultánea.
+    *   Implementación de peticiones paralelas en el backend para agilizar la obtención de resultados agregados.
 *   **Resiliencia ante Errores de la API del INEGI (Bypass de Error 500):**
-    *   La API del INEGI (`BuscarEntidad`) tiende a fallar con códigos `500` o expirar si la consulta contiene nombres complejos de giros o municipios concatenados en texto plano.
-    *   **Solución:** Implementamos un algoritmo de búsqueda robusto que simplifica las consultas enviadas a INEGI (ej. *"comercio al por menor"* lo reduce a *"comercio"*). Luego, en el cliente, se realiza un filtro JS exacto e instantáneo sobre la respuesta. Esto evita errores 500 y garantiza que el buscador sea infalible.
-*   **UI/UX Premium y Moderna (SaaS de Alto Impacto):**
-    *   **Navbar de Vidrio Esmerilado (Glassmorphism):** Barra de navegación fija con desenfoque de fondo (`backdrop-filter`) y bordes estilizados.
-    *   **Controles de Selección por Chips (`.chip-checkbox`):** Eliminación de listas desplegables rígidas. Los giros y municipios seleccionados se gestionan visualmente mediante botones interactivos con transiciones suaves.
-    *   **Estilo del Token en Navbar:** El campo de configuración del token de INEGI se integró discretamente como un elemento interactivo en la barra superior.
-*   **Resolución de Advertencia de Hidratación (Hydration Mismatch):**
-    *   Se resolvió la inconsistencia de hidratación HTML de React causada por extensiones de navegador que inyectaban atributos en el DOM, agregando `suppressHydrationWarning`.
+    *   La API del INEGI (`BuscarEntidad`) presenta fallas internas o tiempos de espera elevados al procesar cadenas de búsqueda complejas que combinan nombres de giros y municipios.
+    *   **Solución:** Se diseñó un esquema que simplifica la consulta del lado del servidor (utilizando la raíz léxica del giro, ej: *"comercio"* en lugar de *"comercio al por menor"*). Posteriormente, el cliente aplica un filtro exacto en JavaScript sobre los campos `Clase_actividad` y `Nombre`. Esto previene respuestas fallidas de la API y asegura la disponibilidad de la búsqueda.
+*   **Interfaz de Usuario Optimizada:**
+    *   **Efecto de Desenfocado (Glassmorphism):** Barra de navegación con desenfoque de fondo mediante propiedades CSS estándar (`backdrop-filter`).
+    *   **Interfaz de Selección basada en Chips:** Reemplazo de menús desplegables por controles tipo chip interactivos con transiciones dinámicas para facilitar la selección múltiple.
+    *   **Integración del Token:** El campo para configurar el token de acceso al INEGI se encuentra integrado directamente en la barra de navegación superior.
+*   **Corrección de Error de Hidratación:**
+    *   Se implementó `suppressHydrationWarning` en la plantilla principal para evitar discrepancias de renderizado generadas por extensiones del navegador del usuario.
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
-*   **Frontend & Backend:** [Next.js](https://nextjs.org/) (App Router, React 19)
-*   **Base de Datos:** [MySQL](https://www.mysql.com/) (usando el conector nativo `mysql2`)
-*   **Mapas:** [Leaflet.js](https://leafletjs.com/) & [OpenStreetMap](https://www.openstreetmap.org/)
-*   **Estilos:** Vanilla CSS (CSS Variables, Flexbox, Grid y Glassmorphism)
+*   **Frontend y Backend:** Next.js (App Router, React 19)
+*   **Base de Datos:** MySQL (conector nativo `mysql2`)
+*   **Mapas:** Leaflet.js y OpenStreetMap
+*   **Estilos:** CSS Vanilla (Variables CSS, Flexbox, Grid)
 
 ---
 
-## 💻 Configuración e Instalación
+## Configuración e Instalación
 
 ### 1. Requisitos Previos
 
-*   **Node.js** v18 o superior instalado en tu equipo.
-*   **MySQL Server** en ejecución (el instalador local o vía Docker).
+*   Node.js v18 o superior.
+*   Servidor MySQL en ejecución.
 
-### 2. Configurar Variables de Entorno
+### 2. Variables de Entorno
 
-Crea o edita el archivo `.env` en la raíz del proyecto. El archivo ya ha sido preconfigurado con tus credenciales:
+Cree un archivo `.env` en la raíz del proyecto basándose en la siguiente plantilla:
 
 ```env
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=Leoluis03
+DB_PASSWORD=tu_contraseña
 DB_NAME=api_mx
 
-# Opcional: Escribe aquí tu token de INEGI por defecto
+# Token de acceso a la API del INEGI
 DENUE_API_TOKEN=
 ```
 
-### 3. Inicializar la Base de Datos
+### 3. Inicialización de la Base de Datos
 
-La aplicación cuenta con una **inicialización automática**. La primera vez que el servidor se ejecute y reciba una solicitud (o visites la página), el sistema:
-1.  Se conectará a tu servidor de MySQL local.
-2.  Creará automáticamente la base de datos `api_mx` si no existe.
-3.  Creará las tablas `portfolios` y `companies` e instalará las relaciones necesarias.
+La aplicación cuenta con inicialización automática. Al iniciar el servidor y recibir la primera petición, el backend:
+1.  Verificará la conexión con el servidor MySQL.
+2.  Creará la base de datos `api_mx` en caso de no existir.
+3.  Ejecutará el esquema de base de datos para generar las tablas `portfolios` y `companies`.
 
-*Si prefieres inicializarla manualmente, puedes ejecutar el script SQL localizado en [lib/schema.sql](file:///z:/obsidian/api/lib/schema.sql) en MySQL Workbench o tu gestor de base de datos preferido.*
+*Nota: Si requiere inicializar manualmente la base de datos, ejecute el archivo SQL ubicado en `lib/schema.sql`.*
 
 ### 4. Obtención del Token de INEGI DENUE
 
-1.  Regístrate de forma gratuita en el portal del INEGI: [Generar Token DENUE](https://www.inegi.org.mx/app/api/denue/v1/token/).
-2.  El token será enviado de inmediato a tu correo electrónico.
-3.  Puedes ingresarlo directamente en la interfaz web (se guardará en tu navegador) o guardarlo en tu variable de entorno `DENUE_API_TOKEN` en el archivo `.env`.
+1.  Regístrese en el portal de desarrolladores de INEGI para obtener un token de acceso: [Portal INEGI](https://www.inegi.org.mx/app/api/denue/v1/token/).
+2.  El token será enviado a su correo electrónico.
+3.  Ingrese el token en el campo de configuración del sitio web o guárdelo directamente en la variable de entorno `DENUE_API_TOKEN` en el archivo `.env`.
 
-### 5. Ejecutar Localmente
+### 5. Ejecución en Desarrollo
 
-Ejecuta el servidor de desarrollo:
+Instale dependencias y ejecute el servidor local:
 
 ```bash
+npm install
 npm run dev
 ```
 
-Abre tu navegador en [http://localhost:3000](http://localhost:3000) para ver la aplicación web en funcionamiento.
+La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 🚢 Despliegue en Vercel
+## Despliegue en Vercel
 
-Dado que la aplicación está construida sobre Next.js, se despliega de forma nativa en **Vercel**:
+Para desplegar la aplicación en Vercel:
 
-1.  Sube el código a tu repositorio de GitHub: `https://github.com/charlyycastro03/api_MX.git`.
-2.  Importa el proyecto en Vercel.
-3.  Configura las Variables de Entorno en el panel de Vercel con las credenciales de tu base de datos de producción (por ejemplo, usando Railway, Aiven o Supabase MySQL) y tu token de INEGI:
-    *   `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
-    *   `DENUE_API_TOKEN`.
-4.  ¡Haz clic en **Deploy**!
+1.  Suba el código al repositorio de GitHub: `https://github.com/charlyycastro03/api_MX.git`.
+2.  Importe el proyecto desde la consola de Vercel.
+3.  Configure las variables de entorno en Vercel con los datos de producción de su base de datos y su token del INEGI (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DENUE_API_TOKEN`).
+4.  Ejecute el despliegue.
