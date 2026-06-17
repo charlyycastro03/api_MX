@@ -89,3 +89,6 @@ export async function GET() {
     results
   });
 }
+
+// Trigger redeploy to pick up new Vercel environment variables from connected Supabase integration
+
