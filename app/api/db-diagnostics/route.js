@@ -59,13 +59,20 @@ export async function GET() {
 
     // Only test connection for postgresql connection strings
     if (value.startsWith('postgresql://') || value.startsWith('postgres://')) {
-      const pool = new Pool({
-        connectionString: value,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 5000
-      });
-
+      let pool;
       try {
+        const url = new URL(value);
+        const pgConfig = {
+          user: decodeURIComponent(url.username),
+          password: decodeURIComponent(url.password),
+          host: url.hostname,
+          port: parseInt(url.port || '5432'),
+          database: decodeURIComponent(url.pathname.replace(/^\//, '')),
+          ssl: { rejectUnauthorized: false },
+          connectionTimeoutMillis: 5000
+        };
+        pool = new Pool(pgConfig);
+        
         const start = Date.now();
         const res = await pool.query('SELECT NOW()');
         results[name].status = 'SUCCESS';
@@ -76,7 +83,9 @@ export async function GET() {
         results[name].error = err.message;
         results[name].errorCode = err.code;
       } finally {
-        await pool.end();
+        if (pool) {
+          await pool.end();
+        }
       }
     } else {
       results[name].status = 'SKIPPED (not a DB connection string)';
