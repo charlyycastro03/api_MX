@@ -3,13 +3,20 @@ import pg from 'pg';
 const { Pool } = pg;
 
 export async function GET() {
-  const envVars = [
+  // Find all environment variable keys containing DB, POSTGRES, SUPABASE, URL, or CONN
+  const allEnvKeys = Object.keys(process.env).filter(key => {
+    const k = key.toUpperCase();
+    return k.includes('DB') || k.includes('POSTGRES') || k.includes('SUPABASE') || k.includes('URL') || k.includes('CONN');
+  });
+
+  const envVars = Array.from(new Set([
     'DATABASE_URL',
     'POSTGRES_URL',
     'POSTGRES_URL_NON_POOLING',
     'SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_URL'
-  ];
+    'NEXT_PUBLIC_SUPABASE_URL',
+    ...allEnvKeys
+  ]));
 
   const results = {};
 
@@ -33,6 +40,8 @@ export async function GET() {
         port = url.port || '5432';
         database = url.pathname.replace(/^\//, '');
         masked = `postgresql://***:***@${host}:${port}/${database}`;
+      } else if (name.includes('KEY') || name.includes('PASSWORD') || name.includes('SECRET') || name.includes('TOKEN')) {
+        masked = '*** (sensitive key)';
       } else {
         masked = value.substring(0, 15) + '...';
       }
@@ -76,6 +85,7 @@ export async function GET() {
 
   return NextResponse.json({
     timestamp: new Date().toISOString(),
+    foundKeys: allEnvKeys,
     results
   });
 }
