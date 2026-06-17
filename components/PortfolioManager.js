@@ -204,6 +204,45 @@ export default function PortfolioManager({
     setShowDialer(true);
   };
 
+  const renderStatusBadge = (status) => {
+    let color = 'var(--text-muted)';
+    let text = 'Pendiente';
+    let dotColor = '#94a3b8';
+
+    if (status === 'No contestó') {
+      color = 'var(--accent-warning)';
+      text = 'No contestó';
+      dotColor = '#fb923c';
+    } else if (status === 'Contactado - Sin interés') {
+      color = 'var(--accent-danger)';
+      text = 'Sin interés';
+      dotColor = '#f87171';
+    } else if (status === 'Contactado - Interesado') {
+      color = 'var(--accent-success)';
+      text = 'Interesado';
+      dotColor = '#4ade80';
+    }
+
+    return (
+      <span className="status-badge-indicator" style={{ 
+        display: 'inline-flex', 
+        alignItems: 'center', 
+        gap: '6px', 
+        fontSize: '11px', 
+        fontWeight: '600', 
+        padding: '3px 8px', 
+        borderRadius: '4px', 
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        color: color,
+        marginTop: '4px'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor }}></span>
+        {text}
+      </span>
+    );
+  };
+
   return (
     <div className="crm-container">
       {/* Sidebar - Portfolios List */}
@@ -346,7 +385,10 @@ export default function PortfolioManager({
                   <div key={company.id} className="crm-card">
                     <div className="crm-card-header">
                       <div className="company-meta">
-                        <h3>{company.name}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <h3>{company.name}</h3>
+                          {renderStatusBadge(company.call_status)}
+                        </div>
                         <span className="activity-tag">{company.activity}</span>
                         {company.address && <p className="address-sub">{company.address}</p>}
                       </div>
@@ -355,8 +397,9 @@ export default function PortfolioManager({
                           onClick={() => onSelectCompany(company)}
                           className="btn-icon btn-locate"
                           title="Ubicar en Mapa"
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          📍
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                         </button>
                         <button 
                           onClick={() => handleDeleteCompany(company.id)}
@@ -374,24 +417,27 @@ export default function PortfolioManager({
                         {company.phone && (
                           <div className="contact-item">
                             <span className="label">Teléfono:</span>
-                            <a href={`tel:${cleanPhone(company.phone)}`} className="phone-tag">
-                              📞 {company.phone}
+                            <a href={`tel:${cleanPhone(company.phone)}`} className="phone-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#34d399'}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                              {company.phone}
                             </a>
                           </div>
                         )}
                         {company.email && (
                           <div className="contact-item">
                             <span className="label">Correo:</span>
-                            <a href={`mailto:${company.email}`} className="email-tag">
-                              ✉️ {company.email}
+                            <a href={`mailto:${company.email}`} className="email-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#fb923c'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                              {company.email}
                             </a>
                           </div>
                         )}
                         {company.website && (
                           <div className="contact-item">
                             <span className="label">Web:</span>
-                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer" className="web-tag">
-                              🌐 {company.website}
+                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer" className="web-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                              Sitio Web
                             </a>
                           </div>
                         )}
