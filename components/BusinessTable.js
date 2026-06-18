@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function BusinessTable({ 
   companies = [], 
@@ -14,6 +14,25 @@ export default function BusinessTable({
   const [savingId, setSavingId] = useState(null);
   const [selectedPortfolioForCompany, setSelectedPortfolioForCompany] = useState({});
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [searchProgress, setSearchProgress] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setSearchProgress(0);
+      return;
+    }
+    
+    const interval = window.setInterval(() => {
+      setSearchProgress((current) => {
+        // Slow down as it approaches 95%
+        const remaining = 95 - current;
+        const increment = Math.max(0.5, remaining * 0.1 * Math.random());
+        return Math.min(95, current + increment);
+      });
+    }, 300);
+    
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -120,8 +139,16 @@ export default function BusinessTable({
   if (loading) {
     return (
       <div className="table-loading-state">
-        <div className="spinner"></div>
-        <p>Buscando empresas en la API del INEGI...</p>
+        <div className="spinner-wrapper" style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+          <div className="spinner"></div>
+        </div>
+        <div className="loading-text" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <p style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Buscando empresas en la API del INEGI...</p>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Por favor espera, estamos procesando los datos.</span>
+        </div>
+        <div className="progress-container" style={{ width: '80%', maxWidth: '350px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', height: '6px', marginTop: '10px', border: '1px solid rgba(255,255,255,0.02)' }}>
+          <div className="progress-fill" style={{ width: `${searchProgress}%`, background: 'linear-gradient(90deg, var(--accent-primary) 0%, #818cf8 100%)', height: '100%', transition: 'width 0.3s ease-out', borderRadius: '12px' }}></div>
+        </div>
       </div>
     );
   }
