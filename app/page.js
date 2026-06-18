@@ -81,6 +81,7 @@ export default function Home() {
   
   const [availableMunicipalities, setAvailableMunicipalities] = useState([]);
   const [selectedMunicipalities, setSelectedMunicipalities] = useState([]);
+  const [municipalitySearch, setMunicipalitySearch] = useState('');
   const [allMunicipiosPorEstado, setAllMunicipiosPorEstado] = useState({});
   
   const [companies, setCompanies] = useState([]);
@@ -145,6 +146,7 @@ export default function Home() {
       setAvailableMunicipalities([]);
     }
     setSelectedMunicipalities([]);
+    setMunicipalitySearch('');
   }, [selectedState, allMunicipiosPorEstado]);
 
   // Client-side filter for estrato and municipalities
@@ -483,19 +485,45 @@ export default function Home() {
                   </div>
 
                   {availableMunicipalities.length > 0 && (
-                    <div className="form-group">
+                    <div className="form-group animate-slide-up" style={{ animationDelay: '0.2s' }}>
                       <label>Filtrar por Municipios (Opcional):</label>
-                      <div className="municipalities-list">
-                        {availableMunicipalities.map(muni => (
-                          <label key={muni} className="checkbox-label">
-                            <input
-                              type="checkbox"
-                              checked={selectedMunicipalities.includes(muni)}
-                              onChange={() => handleMunicipalityChange(muni)}
-                            />
-                            {muni}
-                          </label>
-                        ))}
+                      <div className="multiselect-container">
+                        <input
+                          type="text"
+                          placeholder="Buscar municipio..."
+                          value={municipalitySearch}
+                          onChange={(e) => setMunicipalitySearch(e.target.value)}
+                          className="municipality-search-input"
+                        />
+                        
+                        {selectedMunicipalities.length > 0 && (
+                          <div className="selected-chips-container">
+                            {selectedMunicipalities.map(muni => (
+                              <div key={`sel-${muni}`} className="chip-selected">
+                                <span>{muni}</span>
+                                <button type="button" onClick={() => handleMunicipalityChange(muni)}>&times;</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="municipalities-list">
+                          {availableMunicipalities
+                            .filter(muni => normalizeText(muni).includes(normalizeText(municipalitySearch)))
+                            .map(muni => (
+                            <label key={muni} className="checkbox-label">
+                              <input
+                                type="checkbox"
+                                checked={selectedMunicipalities.includes(muni)}
+                                onChange={() => handleMunicipalityChange(muni)}
+                              />
+                              {muni}
+                            </label>
+                          ))}
+                          {availableMunicipalities.filter(muni => normalizeText(muni).includes(normalizeText(municipalitySearch))).length === 0 && (
+                            <span className="text-muted" style={{fontSize: '12px', padding: '4px'}}>No se encontraron coincidencias</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -774,14 +802,76 @@ color: var(--accent-primary-text);
           cursor: not-allowed;
         }
 
+        .multiselect-container {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          background: rgba(12, 18, 34, 0.3);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-md);
+          padding: 12px;
+        }
+
+        .municipality-search-input {
+          background: var(--bg-tertiary) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          border-radius: var(--radius-sm) !important;
+          padding: 8px 12px !important;
+          font-size: 13px !important;
+          outline: none;
+          width: 100%;
+        }
+
+        .municipality-search-input:focus {
+          border-color: var(--accent-primary) !important;
+          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+        }
+
+        .selected-chips-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .chip-selected {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(99, 102, 241, 0.15);
+          border: 1px solid rgba(99, 102, 241, 0.3);
+          color: var(--accent-primary);
+          padding: 4px 10px;
+          border-radius: var(--radius-full);
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .chip-selected button {
+          background: transparent;
+          border: none;
+          color: var(--accent-primary);
+          font-size: 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          padding: 0;
+          margin-top: -1px;
+        }
+
+        .chip-selected button:hover {
+          color: #f87171;
+        }
+
         .municipalities-list {
           display: flex;
           flex-direction: column;
           gap: 6px;
-          max-height: 150px;
+          max-height: 160px;
           overflow-y: auto;
-          background: var(--bg-tertiary);
-          border: 1px solid var(--panel-border);
+          background: var(--bg-secondary);
+          border: 1px solid rgba(255, 255, 255, 0.05);
           border-radius: var(--radius-sm);
           padding: 8px;
         }
@@ -794,10 +884,18 @@ color: var(--accent-primary-text);
           color: var(--text-primary) !important;
           cursor: pointer;
           font-weight: normal !important;
+          padding: 4px;
+          border-radius: 4px;
+          transition: background 0.2s;
+        }
+
+        .checkbox-label:hover {
+          background: rgba(255, 255, 255, 0.05);
         }
         
         .checkbox-label input[type="checkbox"] {
           width: auto;
+        }
           cursor: pointer;
         }
 
