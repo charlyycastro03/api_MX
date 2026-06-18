@@ -13,12 +13,40 @@ export default function BusinessTable({
   const [itemsPerPage] = useState(10);
   const [savingId, setSavingId] = useState(null);
   const [selectedPortfolioForCompany, setSelectedPortfolioForCompany] = useState({});
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedCompanies = [...companies].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aVal = '';
+    let bVal = '';
+    
+    if (sortConfig.key === 'name') {
+      aVal = (a.Nombre || a.name || a.RazonSocial || '').toLowerCase();
+      bVal = (b.Nombre || b.name || b.RazonSocial || '').toLowerCase();
+    } else if (sortConfig.key === 'activity') {
+      aVal = (a.ClaseActividad || a.activity || '').toLowerCase();
+      bVal = (b.ClaseActividad || b.activity || '').toLowerCase();
+    }
+    
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   // Pagination calculation
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = companies.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(companies.length / itemsPerPage);
+  const currentItems = sortedCompanies.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedCompanies.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -117,11 +145,15 @@ export default function BusinessTable({
         <table>
           <thead>
             <tr>
-              <th>Nombre</th>
-              <th>Actividad</th>
+              <th onClick={() => handleSort('name')} style={{cursor: 'pointer'}} title="Ordenar por Nombre">
+                Nombre <span style={{fontSize: '10px', opacity: 0.6}}>{sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}</span>
+              </th>
+              <th onClick={() => handleSort('activity')} style={{cursor: 'pointer'}} title="Ordenar por Actividad">
+                Actividad <span style={{fontSize: '10px', opacity: 0.6}}>{sortConfig.key === 'activity' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}</span>
+              </th>
               <th>Ubicación</th>
               <th>Contacto</th>
-              <th>Correo</th>
+              <th style={{textAlign: 'center'}}>Correo</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -151,44 +183,48 @@ export default function BusinessTable({
                     <span className="address-text">{address}</span>
                   </td>
                   <td className="contact-cell">
-                    {phone && (
-                      <a href={`tel:${cleanPhone(phone)}`} className="contact-link phone-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#34d399'}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        {phone}
-                      </a>
-                    )}
-                    {website && (
-                      <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="contact-link web-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                        Sitio Web
-                      </a>
-                    )}
-                    {!phone && !website && <span className="text-muted">Sin datos</span>}
+                    <div className="contact-wrapper">
+                      {phone && (
+                        <a href={`tel:${cleanPhone(phone)}`} className="contact-link phone-link">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#34d399'}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                          <span>{phone}</span>
+                        </a>
+                      )}
+                      {website && (
+                        <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer" className="contact-link web-link">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                          <span>Sitio Web</span>
+                        </a>
+                      )}
+                      {!phone && !website && <span className="text-muted">Sin datos</span>}
+                    </div>
                   </td>
-                  <td className="email-cell">
+                  <td className="email-cell" style={{textAlign: 'center'}}>
                     {email ? (
-                      <a href={`mailto:${email}`} className="contact-link email-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#fb923c'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        {email}
-                      </a>
+                      <div className="email-actions">
+                        <a href={`mailto:${email}`} className="btn-icon-action" title={`Enviar a: ${email}`}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: '#fb923c'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </a>
+                        <button onClick={() => { navigator.clipboard.writeText(email); }} className="btn-icon-action" title="Copiar correo">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                      </div>
                     ) : (
-                      <span className="text-muted">Sin correo</span>
+                      <span className="text-muted" style={{fontSize: '11px'}}>Sin correo</span>
                     )}
                   </td>
                   <td className="actions-cell">
                     <div className="action-buttons-group">
                       <button 
                         onClick={() => onSelectCompany(comp)} 
-                        className="btn-action btn-secondary"
+                        className="btn-action btn-secondary btn-icon-only"
                         title="Ver en Mapa"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        Ubicar
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                       </button>
                       
                       {isSaved ? (
-                        <span className="saved-indicator">Guardado</span>
+                        <span className="saved-indicator">✓ Guardado</span>
                       ) : (
                         <div className="save-form-inline">
                           <select
@@ -196,15 +232,15 @@ export default function BusinessTable({
                             onChange={(e) => handlePortfolioSelect(id, e.target.value)}
                             className="select-portfolio"
                           >
-                            <option value="">-- Guardar en... --</option>
+                            <option value="">Guardar en...</option>
                             {portfolios.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
+                              <option key={p.id} value={p.id} title={p.name}>{p.name}</option>
                             ))}
                           </select>
                           <button
                             onClick={() => handleSave(comp, id)}
                             disabled={savingId === id || !selectedPortfolioForCompany[id]}
-                            className="btn-action btn-primary"
+                            className="btn-action btn-primary btn-save"
                           >
                             {savingId === id ? '...' : 'Guardar'}
                           </button>
@@ -632,35 +668,70 @@ export default function BusinessTable({
           overflow: hidden;
         }
         .contact-cell {
+          min-width: 140px;
+        }
+        .contact-wrapper {
           display: flex;
           flex-direction: column;
           gap: 6px;
-          min-width: 150px;
         }
         .contact-link {
-          font-size: 12px;
+          font-size: 12.5px;
           color: var(--text-secondary);
           text-decoration: none;
           transition: var(--transition-fast);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          line-height: 1;
+        }
+        .contact-link span {
+          display: inline-block;
+          transform: translateY(1px); /* micro-adjustment for text alignment */
+        }
+        .contact-link svg {
+          flex-shrink: 0;
+        }
+        .email-actions {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+        .btn-icon-action {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: var(--transition-fast);
+        }
+        .btn-icon-action:hover {
+          background: rgba(255, 255, 255, 0.1);
+          transform: translateY(-2px);
+        }
+        .btn-icon-only {
+          padding: 8px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
         .contact-link:hover {
           color: var(--accent-primary);
           transform: translateX(2px);
         }
-        .phone-link {
-          font-weight: 500;
-          color: #f8fafc;
-        }
         .actions-cell {
-          min-width: 230px;
+          min-width: 240px;
         }
         .action-buttons-group {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
         }
         .btn-action {
           padding: 8px 12px;
@@ -673,7 +744,7 @@ export default function BusinessTable({
         }
         .btn-primary {
           background: var(--accent-primary);
-color: var(--accent-primary-text);
+          color: var(--accent-primary-text);
         }
         .btn-primary:hover:not(:disabled) {
           background: #4f46e5;
@@ -703,21 +774,28 @@ color: var(--accent-primary-text);
           color: var(--text-primary);
           border: 1px solid var(--panel-border);
           border-radius: var(--radius-sm);
-          padding: 7px 10px;
-          font-size: 12px;
+          padding: 7px 8px;
+          font-size: 11.5px;
           outline: none;
-          max-width: 140px;
+          max-width: 105px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
           cursor: pointer;
         }
         .select-portfolio:focus {
           border-color: var(--accent-primary);
         }
+        .btn-save {
+          padding: 7px 10px;
+          font-size: 11.5px;
+        }
         .saved-indicator {
-          font-size: 12px;
+          font-size: 11.5px;
           color: var(--accent-success);
           font-weight: 600;
           background: rgba(16, 185, 129, 0.1);
-          padding: 6px 12px;
+          padding: 6px 10px;
           border-radius: var(--radius-sm);
           border: 1px solid rgba(16, 185, 129, 0.2);
         }

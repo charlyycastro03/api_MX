@@ -63,6 +63,11 @@ const GIROS_POPULARES = [
   { value: 'servicios profesionales', label: 'Servicios Profesionales' },
 ];
 
+const normalizeText = (text) => {
+  if (!text) return '';
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('search'); // 'search' or 'crm'
   const [token, setToken] = useState('');
@@ -72,6 +77,7 @@ export default function Home() {
   const [selectedGiros, setSelectedGiros] = useState([]);
   const [selectedState, setSelectedState] = useState('09'); // Default: Ciudad de México
   const [selectedEstrato, setSelectedEstrato] = useState('todos');
+  const [onlyWithPhone, setOnlyWithPhone] = useState(false);
   
   const [availableMunicipalities, setAvailableMunicipalities] = useState([]);
   const [selectedMunicipalities, setSelectedMunicipalities] = useState([]);
@@ -156,18 +162,25 @@ export default function Home() {
       result = result.filter(c => {
         let m = c.Municipio || c.municipio || '';
         if (m) {
-          return selectedMunicipalities.some(selected => m.toLowerCase() === selected.toLowerCase());
+          return selectedMunicipalities.some(selected => normalizeText(m) === normalizeText(selected));
         }
         if (c.Ubicacion) {
-          const parts = c.Ubicacion.split(',').map(p => p.trim().toLowerCase());
-          return selectedMunicipalities.some(selected => parts.includes(selected.toLowerCase()));
+          const parts = c.Ubicacion.split(',').map(p => normalizeText(p.trim()));
+          return selectedMunicipalities.some(selected => parts.includes(normalizeText(selected)));
         }
         return false;
       });
     }
 
+    if (onlyWithPhone) {
+      result = result.filter(c => {
+        const phoneVal = c.Telefono || c.phone || '';
+        return phoneVal.trim() !== '';
+      });
+    }
+
     setFilteredCompanies(result);
-  }, [companies, selectedEstrato, selectedMunicipalities]);
+  }, [companies, selectedEstrato, selectedMunicipalities, onlyWithPhone]);
 
   const handleMunicipalityChange = (muni) => {
     setSelectedMunicipalities(prev => 
@@ -222,6 +235,10 @@ export default function Home() {
           const simpleG = simplifyGiro(g);
           selectedMunicipalities.forEach(muni => {
             simplifiedQueries.add(`${simpleG} ${muni}`.trim());
+            const normalizedMuni = normalizeText(muni);
+            if (normalizedMuni !== muni.toLowerCase()) {
+              simplifiedQueries.add(`${simpleG} ${normalizedMuni}`.trim());
+            }
           });
         });
       } else {
@@ -426,6 +443,17 @@ export default function Home() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
+                  </div>
+
+                  <div className="form-group animate-slide-up" style={{ animationDelay: '0.15s' }}>
+                    <label className="checkbox-label" style={{ fontWeight: '600' }}>
+                      <input
+                        type="checkbox"
+                        checked={onlyWithPhone}
+                        onChange={(e) => setOnlyWithPhone(e.target.checked)}
+                      />
+                      Mostrar solo empresas con teléfono registrado
+                    </label>
                   </div>
 
                   <div className="form-row">

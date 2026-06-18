@@ -466,24 +466,11 @@ export default function PortfolioManager({
                               <textarea
                                 value={tempNotes}
                                 onChange={(e) => setTempNotes(e.target.value)}
+                                onBlur={() => handleSaveNotes(company.id)}
                                 placeholder="Escribe el resultado de la llamada..."
                                 rows={3}
                                 autoFocus
                               />
-                              <div className="notes-editing-actions">
-                                <button 
-                                  onClick={() => handleSaveNotes(company.id)}
-                                  className="btn-save-notes"
-                                >
-                                  Guardar Nota
-                                </button>
-                                <button 
-                                  onClick={() => setEditingNotesId(null)}
-                                  className="btn-cancel-notes"
-                                >
-                                  Cancelar
-                                </button>
-                              </div>
                             </div>
                           ) : (
                             <div 

@@ -119,10 +119,10 @@ export default function CallCenterDialer({ companies, onClose, onUpdateCompany }
               <textarea
                 value={tempNotes}
                 onChange={(e) => setTempNotes(e.target.value)}
+                onBlur={saveNotes}
                 placeholder="Escribe el resultado de la llamada..."
                 rows={6}
               />
-              <button onClick={saveNotes} className="btn-save-notes">Guardar Nota</button>
             </div>
           </div>
         </div>
