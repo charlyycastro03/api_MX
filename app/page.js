@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import BusinessTable from '@/components/BusinessTable';
 import PortfolioManager from '@/components/PortfolioManager';
 import Map from '@/components/Map';
@@ -63,6 +63,31 @@ const GIROS_POPULARES = [
   { value: 'servicios profesionales', label: 'Servicios Profesionales' },
 ];
 
+const SUGERENCIAS_BUSQUEDA = [
+  'Abarrotes', 'Farmacia', 'Ferretería', 'Papelería', 'Estética',
+  'Taller mecánico', 'Refaccionaria', 'Zapatería', 'Boutique', 'Carnicería',
+  'Panadería', 'Tortillería', 'Restaurante', 'Cafetería', 'Taquería',
+  'Pizzería', 'Gimnasio', 'Consultorio dental', 'Consultorio médico',
+  'Veterinaria', 'Lavandería', 'Tintorería', 'Cerrajería', 'Carpintería',
+  'Herrería', 'Vidriería', 'Plomería', 'Electricista', 'Pinturas',
+  'Materiales para construcción', 'Mueblería', 'Joyería', 'Óptica',
+  'Notaría', 'Despacho contable', 'Despacho jurídico', 'Agencia de viajes',
+  'Inmobiliaria', 'Escuela', 'Colegio', 'Guardería', 'Clínica',
+  'Laboratorio', 'Hojalatería', 'Taller eléctrico',
+  'Autolavado', 'Vulcanizadora', 'Llantera', 'Gasolinera', 'Purificadora',
+  'Cremería', 'Frutería', 'Verdulería', 'Pollería', 'Pescadería',
+  'Dulcería', 'Materias primas', 'Heladería', 'Paletería', 'Licorería',
+  'Depósito de cerveza', 'Cyber café', 'Casa de empeño', 'Salón de fiestas',
+  'Florería', 'Regalos', 'Novedades', 'Cosméticos', 'Perfumería',
+  'Tienda de conveniencia', 'Minisuper', 'Supermercado', 'Tienda departamental',
+  'Agencia automotriz', 'Taller de motos', 'Refacciones para moto',
+  'Venta de celulares', 'Reparación de celulares', 'Computadoras',
+  'Impresiones', 'Copias', 'Fotografía', 'Tatuajes', 'Barbería',
+  'Spa', 'Masajes', 'Ropa deportiva', 'Bazar', 'Fonda', 
+  'Cocina económica', 'Sushi', 'Hamburguesas', 'Oxxo', 'Seven Eleven',
+  'Elektra', 'Coppel', 'Farmacias del Ahorro', 'Farmacias Similares'
+].sort();
+
 const normalizeText = (text) => {
   if (!text) return '';
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -74,6 +99,10 @@ export default function Home() {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const searchInputRef = useRef(null);
+
   const [selectedGiros, setSelectedGiros] = useState([]);
   const [selectedState, setSelectedState] = useState('09'); // Default: Ciudad de México
   const [selectedEstrato, setSelectedEstrato] = useState('todos');
@@ -131,6 +160,17 @@ export default function Home() {
       .then(res => res.json())
       .then(data => setAllMunicipiosPorEstado(data))
       .catch(err => console.error('Error cargando municipios:', err));
+  }, []);
+
+  // Close autocomplete on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Update available municipalities when state changes
@@ -211,6 +251,26 @@ export default function Home() {
   const handleSaveToken = (newToken) => {
     setToken(newToken);
     localStorage.setItem('denue_api_token', newToken);
+  };
+
+  const handleSearchQueryChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    
+    if (val.length >= 2) {
+      const filtered = SUGERENCIAS_BUSQUEDA.filter(sug => 
+        normalizeText(sug).includes(normalizeText(val))
+      );
+      setFilteredSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
   };
 
   const handleSearch = async (e) => {
@@ -437,14 +497,26 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="form-group animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                  <div className="form-group animate-slide-up" style={{ animationDelay: '0.1s' }} ref={searchInputRef}>
                     <label>Búsqueda Adicional (Opcional):</label>
-                    <input
-                      type="text"
-                      placeholder="Ej. Oxxo, Refaccionaria, Ferretería..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                    <div className="autocomplete-wrapper">
+                      <input
+                        type="text"
+                        placeholder="Ej. Oxxo, Refaccionaria, Ferretería..."
+                        value={searchQuery}
+                        onChange={handleSearchQueryChange}
+                        onFocus={() => { if (searchQuery.length >= 2) setShowSuggestions(true); }}
+                      />
+                      {showSuggestions && filteredSuggestions.length > 0 && (
+                        <ul className="autocomplete-dropdown">
+                          {filteredSuggestions.map((sug, idx) => (
+                            <li key={idx} onClick={() => handleSelectSuggestion(sug)}>
+                              {sug}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
 
                   <div className="form-group animate-slide-up" style={{ animationDelay: '0.15s' }}>
@@ -800,6 +872,42 @@ color: var(--accent-primary-text);
           background: var(--bg-tertiary);
           color: var(--text-muted);
           cursor: not-allowed;
+        }
+
+        .autocomplete-wrapper {
+          position: relative;
+          width: 100%;
+        }
+        .autocomplete-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: var(--bg-secondary);
+          border: 1px solid var(--accent-primary);
+          border-radius: var(--radius-sm);
+          margin-top: 4px;
+          max-height: 220px;
+          overflow-y: auto;
+          z-index: 50;
+          list-style: none;
+          padding: 0;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .autocomplete-dropdown li {
+          padding: 10px 14px;
+          font-size: 13.5px;
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: background 0.2s;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .autocomplete-dropdown li:last-child {
+          border-bottom: none;
+        }
+        .autocomplete-dropdown li:hover {
+          background: rgba(99, 102, 241, 0.15);
+          color: var(--accent-primary);
         }
 
         .multiselect-container {
