@@ -101,9 +101,7 @@ html, body {
   font-family: var(--font-sans) !important;
 }
 
-.leaflet-tile {
-  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) grayscale(80%);
-}
+/* No inverting leaflet tiles since we use native dark_all theme from CartoDB */
 
 .leaflet-popup-content-wrapper {
   background: var(--bg-tertiary) !important;

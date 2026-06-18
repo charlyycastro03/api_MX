@@ -19,8 +19,8 @@ export default function Map({ companies = [], activeCompany = null }) {
       const Leaflet = await import('leaflet');
       if (!isMounted || !mapRef.current) return;
       
-      leafletRef.current = Leaflet.default;
-      const L = leafletRef.current;
+      const L = Leaflet.default || Leaflet;
+      leafletRef.current = L;
 
       // Center of Mexico
       const center = [23.6345, -102.5528];
@@ -42,6 +42,13 @@ export default function Map({ companies = [], activeCompany = null }) {
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
+
+      // Force recalculation of size in case of layout animations
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 500);
 
       setMapReady(true);
     }
