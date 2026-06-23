@@ -30,7 +30,7 @@ export default function Map({ companies = [], activeCompany = null }) {
       mapInstanceRef.current = L.map(mapRef.current).setView(center, zoom);
 
       // Dark-themed tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 20
@@ -146,8 +146,8 @@ export default function Map({ companies = [], activeCompany = null }) {
   }, [companies, activeCompany, mapReady]);
 
   return (
-    <div style={{ width: '100%', height: '100%', minHeight: '400px', position: 'relative' }}>
-      <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: 'var(--radius-md)', overflow: 'hidden' }} />
+    <div style={{ width: '100%', height: '400px', minHeight: '400px', position: 'relative' }}>
+      <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: 'var(--radius-md)', overflow: 'hidden', zIndex: 1 }} />
     </div>
   );
 }
