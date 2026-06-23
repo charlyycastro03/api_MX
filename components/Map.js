@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import 'leaflet/dist/leaflet.css';
 
 export default function Map({ companies = [], activeCompany = null }) {
   const mapRef = useRef(null);
