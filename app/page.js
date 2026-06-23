@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import BusinessTable from '@/components/BusinessTable';
 import PortfolioManager from '@/components/PortfolioManager';
 import Map from '@/components/Map';
@@ -102,6 +103,7 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const searchInputRef = useRef(null);
+  const router = useRouter();
 
   const [selectedGiros, setSelectedGiros] = useState([]);
   const [selectedState, setSelectedState] = useState('09'); // Default: Ciudad de México
@@ -419,6 +421,16 @@ export default function Home() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Error logging out', err);
+    }
+  };
+
   return (
     <div className="dashboard-layout">
       {/* Header Panel */}
@@ -437,22 +449,21 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Global configuration: INEGI token */}
+        {/* User Actions */}
         <div className="header-actions">
-          <div className="token-input-wrapper">
-            <svg className="token-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-            <input
-              id="token-input"
-              type="password"
-              placeholder={token ? "Token INEGI configurado" : "Ingresa Token INEGI"}
-              onChange={(e) => handleSaveToken(e.target.value)}
-              className="token-input"
-            />
-            {token && <span className="token-saved-status">✓</span>}
-          </div>
-          <a href="https://www.inegi.org.mx/app/api/denue/v1/token/" target="_blank" rel="noopener noreferrer" className="btn-secondary btn-small">
-            Obtener token gratis
-          </a>
+          <button 
+            className="btn-secondary btn-small"
+            style={{ marginRight: '10px' }}
+            onClick={() => router.push('/admin/users')}
+          >
+            Control de Perfiles
+          </button>
+          <button 
+            className="btn-danger btn-small"
+            onClick={handleLogout}
+          >
+            Salir
+          </button>
         </div>
       </header>
 

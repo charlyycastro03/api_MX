@@ -175,3 +175,5 @@ html, body {
   box-shadow: 0 4px 10px rgba(255,255,255,0.08);
 }
 
+
+.btn-danger { background: rgba(243, 18, 96, 0.1); color: var(--accent-danger); border: 1px solid rgba(243, 18, 96, 0.3); border-radius: var(--radius-sm); padding: 8px 16px; font-weight: 500; cursor: pointer; transition: all var(--transition-fast); } .btn-danger:hover { background: rgba(243, 18, 96, 0.2); } .btn-danger.btn-small { padding: 6px 12px; font-size: 12px; border-radius: var(--radius-full); }
