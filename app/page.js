@@ -392,12 +392,12 @@ export default function Home() {
       // Mapping fields from DENUE response to DB model schema
       const mapped = {
         denueId: String(company.Id || company.id || company.ID),
-        name: company.Nombre || company.name || company.RazonSocial,
-        activity: company.ClaseActividad || company.activity || '',
+        name: company.Nombre || company.name || company.RazonSocial || company.Razon_social || '',
+        activity: company.ClaseActividad || company.Clase_actividad || company.activity || '',
         phone: company.Telefono || company.phone || '',
-        email: company.CorreoElectronico || company.email || '',
-        website: company.SitioInternet || company.website || '',
-        address: `${company.Calle || ''} ${company.NumExterior || ''}, ${company.Colonia || ''}, ${company.Municipio || ''}, ${company.Entidad || ''}`,
+        email: company.CorreoElectronico || company.Correo_e || company.correo_e || company.email || '',
+        website: company.SitioInternet || company.Sitio_internet || company.sitio_internet || company.website || '',
+        address: company.address || company.Ubicacion || `${company.Calle || ''} ${company.NumExterior || ''}, ${company.Colonia || ''}, ${company.Municipio || ''}, ${company.Entidad || ''}`,
         latitude: parseFloat(company.Latitud || company.latitude || company.Latitude || 0),
         longitude: parseFloat(company.Longitud || company.longitude || company.Longitude || 0),
         portfolioId: parseInt(portfolioId)

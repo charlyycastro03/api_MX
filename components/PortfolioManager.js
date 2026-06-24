@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import CallCenterDialer from './CallCenterDialer';
+import BulkEmailModal from './BulkEmailModal';
 
 export default function PortfolioManager({
   portfolios = [],
@@ -24,6 +25,7 @@ export default function PortfolioManager({
   // Dialer state
   const [showDialer, setShowDialer] = useState(false);
   const [dialerCompanies, setDialerCompanies] = useState([]);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   // Set initial selected portfolio if none selected and portfolios exist
   useEffect(() => {
@@ -324,6 +326,15 @@ export default function PortfolioManager({
                 title="Solo prospectos con teléfono o email"
               >
                 Call Center (Con Contacto)
+              </button>
+              <button 
+                onClick={() => setIsEmailModalOpen(true)} 
+                className="btn-action btn-primary btn-email"
+                disabled={companies.length === 0}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                Enviar Correo Masivo
               </button>
             </div>
 
@@ -1086,6 +1097,11 @@ color: var(--accent-primary-text);
           }
         }
       `}</style>
+      <BulkEmailModal 
+        isOpen={isEmailModalOpen} 
+        onClose={() => setIsEmailModalOpen(false)} 
+        companies={companies} 
+      />
     </div>
   );
 }

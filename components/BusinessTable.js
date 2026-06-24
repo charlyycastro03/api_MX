@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import BulkEmailModal from './BulkEmailModal';
 
 export default function BusinessTable({ 
   companies = [], 
@@ -15,6 +16,70 @@ export default function BusinessTable({
   const [selectedPortfolioForCompany, setSelectedPortfolioForCompany] = useState({});
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchProgress, setSearchProgress] = useState(0);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [scrapedEmails, setScrapedEmails] = useState({});
+  const [scrapingStatus, setScrapingStatus] = useState({});
+  const [isBulkScraping, setIsBulkScraping] = useState(false);
+
+  const handleScrapeEmail = async (company) => {
+    const id = company.Id || company.id || company.denue_id || company.ID;
+    const website = company.SitioInternet || company.Sitio_internet || company.sitio_internet || company.website || '';
+    if (!website) return null;
+
+    setScrapingStatus(prev => ({ ...prev, [id]: 'loading' }));
+
+    try {
+      const res = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: website })
+      });
+
+      if (!res.ok) throw new Error('Error al conectar con el scraper');
+      const data = await res.json();
+
+      if (data.success && data.emailsFound && data.emailsFound.length > 0) {
+        const foundEmail = data.emailsFound[0];
+        setScrapedEmails(prev => ({ ...prev, [id]: foundEmail }));
+        setScrapingStatus(prev => ({ ...prev, [id]: 'success' }));
+        return foundEmail;
+      } else {
+        setScrapingStatus(prev => ({ ...prev, [id]: 'not_found' }));
+        return null;
+      }
+    } catch (err) {
+      console.error('Error scrapeando email:', err);
+      setScrapingStatus(prev => ({ ...prev, [id]: 'error' }));
+      return null;
+    }
+  };
+
+  const handleBulkScrape = async () => {
+    const targets = companies.filter(comp => {
+      const id = comp.Id || comp.id || comp.denue_id || comp.ID;
+      const website = comp.SitioInternet || comp.Sitio_internet || comp.sitio_internet || comp.website || '';
+      const email = scrapedEmails[id] || comp.CorreoElectronico || comp.Correo_e || comp.correo_e || comp.email || '';
+      return website && !email && scrapingStatus[id] !== 'loading' && scrapingStatus[id] !== 'success';
+    });
+
+    if (targets.length === 0) {
+      alert('No hay empresas en la lista actual que tengan sitio web y les falte el correo.');
+      return;
+    }
+
+    setIsBulkScraping(true);
+
+    for (let i = 0; i < targets.length; i++) {
+      const comp = targets[i];
+      await handleScrapeEmail(comp);
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+
+    setIsBulkScraping(false);
+    alert('Escaneo masivo de sitios web finalizado.');
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -78,7 +143,14 @@ export default function BusinessTable({
       return;
     }
     setSavingId(id);
-    await onSaveToPortfolio(company, portId);
+    
+    const resolvedEmail = scrapedEmails[id] || company.CorreoElectronico || company.Correo_e || company.correo_e || company.email || '';
+    const companyToSave = {
+      ...company,
+      email: resolvedEmail
+    };
+
+    await onSaveToPortfolio(companyToSave, portId);
     setSavingId(null);
   };
 
@@ -102,11 +174,11 @@ export default function BusinessTable({
     const rows = companies.map(comp => {
       const id = comp.Id || comp.id || comp.denue_id || comp.ID || '';
       const name = comp.Nombre || comp.name || '';
-      const reason = comp.RazonSocial || '';
-      const activity = comp.ClaseActividad || comp.activity || '';
+      const reason = comp.RazonSocial || comp.Razon_social || '';
+      const activity = comp.ClaseActividad || comp.Clase_actividad || comp.activity || '';
       const phone = comp.Telefono || comp.phone || '';
-      const email = comp.CorreoElectronico || comp.email || '';
-      const website = comp.SitioInternet || comp.website || '';
+      const email = comp.CorreoElectronico || comp.Correo_e || comp.correo_e || comp.email || '';
+      const website = comp.SitioInternet || comp.Sitio_internet || comp.sitio_internet || comp.website || '';
       const address = comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
       const estrato = comp.Estrato || comp.estrato || '';
 
@@ -163,9 +235,31 @@ export default function BusinessTable({
 
   return (
     <div className="table-wrapper">
-      <div className="table-actions-header">
+      <div className="table-actions-header" style={{ gap: '10px' }}>
         <button onClick={exportToCSV} className="btn-action btn-secondary btn-export">
           Exportar a CSV
+        </button>
+        <button 
+          onClick={handleBulkScrape} 
+          className="btn-action btn-secondary btn-bulk-scrape" 
+          disabled={isBulkScraping || companies.length === 0}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', borderColor: 'rgba(99, 102, 241, 0.4)', color: '#a5b4fc', background: 'rgba(99, 102, 241, 0.1)' }}
+        >
+          {isBulkScraping ? (
+            <>
+              <span className="spinner-small" style={{ width: '12px', height: '12px' }}></span>
+              Escaneando webs...
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
+              Escanear Sitios Web
+            </>
+          )}
+        </button>
+        <button onClick={() => setIsEmailModalOpen(true)} className="btn-action btn-primary btn-bulk-email" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Enviar Correo Masivo
         </button>
       </div>
       <div className="table-container desktop-only">
@@ -188,10 +282,10 @@ export default function BusinessTable({
             {currentItems.map((comp) => {
               const id = comp.Id || comp.id || comp.denue_id || comp.ID;
               const name = comp.Nombre || comp.name || comp.RazonSocial;
-              const activity = comp.ClaseActividad || comp.activity || 'No especificada';
+              const activity = comp.ClaseActividad || comp.Clase_actividad || comp.activity || 'No especificada';
               const phone = comp.Telefono || comp.phone || '';
-              const email = comp.CorreoElectronico || comp.email || '';
-              const website = comp.SitioInternet || comp.website || '';
+              const email = scrapedEmails[id] || comp.CorreoElectronico || comp.Correo_e || comp.correo_e || comp.email || '';
+              const website = comp.SitioInternet || comp.Sitio_internet || comp.sitio_internet || comp.website || '';
               const address = comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
               
               const isSaved = savedCompanyIds.has(String(id));
@@ -229,12 +323,27 @@ export default function BusinessTable({
                   <td className="email-cell" style={{textAlign: 'center'}}>
                     {email ? (
                       <div className="email-actions">
+                        {scrapedEmails[id] && <span style={{ fontSize: '9px', color: '#6366f1', fontWeight: '600', background: 'rgba(99, 102, 241, 0.15)', padding: '2px 5px', borderRadius: '4px', marginRight: '4px' }}>Web</span>}
                         <a href={`mailto:${email}`} className="btn-icon-action" title={`Enviar a: ${email}`}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: '#fb923c'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                         </a>
                         <button onClick={() => { navigator.clipboard.writeText(email); }} className="btn-icon-action" title="Copiar correo">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
+                      </div>
+                    ) : website ? (
+                      <div className="scrape-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        {scrapingStatus[id] === 'loading' ? (
+                          <span className="spinner-small" style={{ width: '12px', height: '12px' }}></span>
+                        ) : scrapingStatus[id] === 'not_found' ? (
+                          <span className="text-muted" style={{fontSize: '10px', color: '#ef4444'}}>No encontrado</span>
+                        ) : scrapingStatus[id] === 'error' ? (
+                          <button onClick={() => handleScrapeEmail(comp)} className="btn-scrape-link" style={{ color: '#ef4444', background: 'transparent', border: 'none', fontSize: '10px', cursor: 'pointer', textDecoration: 'underline' }}>Error. Reintentar</button>
+                        ) : (
+                          <button onClick={() => handleScrapeEmail(comp)} className="btn-scrape-link" style={{ color: '#6366f1', background: 'transparent', border: 'none', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', fontWeight: '500' }}>
+                            🔍 Buscar en web
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <span className="text-muted" style={{fontSize: '11px'}}>Sin correo</span>
@@ -286,10 +395,10 @@ export default function BusinessTable({
         {currentItems.map((comp) => {
           const id = comp.Id || comp.id || comp.denue_id || comp.ID;
           const name = comp.Nombre || comp.name || comp.RazonSocial;
-          const activity = comp.ClaseActividad || comp.activity || 'No especificada';
+          const activity = comp.ClaseActividad || comp.Clase_actividad || comp.activity || 'No especificada';
           const phone = comp.Telefono || comp.phone || '';
-          const email = comp.CorreoElectronico || comp.email || '';
-          const website = comp.SitioInternet || comp.website || '';
+          const email = scrapedEmails[id] || comp.CorreoElectronico || comp.Correo_e || comp.correo_e || comp.email || '';
+          const website = comp.SitioInternet || comp.Sitio_internet || comp.sitio_internet || comp.website || '';
           const address = comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`;
           
           const isSaved = savedCompanyIds.has(String(id));
@@ -869,6 +978,11 @@ export default function BusinessTable({
           color: var(--text-secondary);
         }
       `}</style>
+      <BulkEmailModal 
+        isOpen={isEmailModalOpen} 
+        onClose={() => setIsEmailModalOpen(false)} 
+        companies={companies} 
+      />
     </div>
   );
 }
