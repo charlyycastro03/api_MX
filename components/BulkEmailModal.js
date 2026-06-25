@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export default function BulkEmailModal({ isOpen, onClose, companies }) {
   const [recipients, setRecipients] = useState([]);
-  const [subjectTemplate, setSubjectTemplate] = useState('Pregunta rápida sobre {{NOMBRE}}');
+  const [subjectTemplate, setSubjectTemplate] = useState('Una idea digital para {{NOMBRE}} (desde {{MUNICIPIO}})');
   const [bodyTemplate, setBodyTemplate] = useState(
-    'Hola,\n\nEstaba buscando empresas del sector {{ACTIVIDAD}} en {{MUNICIPIO}} y me topé con {{NOMBRE}}.\n\nNoté que muchas empresas en su categoría están buscando optimizar sus procesos de ventas digitales, y desarrollamos una solución específica para esto.\n\n¿Tendría sentido enviarle un vídeo de 2 minutos que muestra cómo lo hacemos?\n\nSaludos,\nSoporte de Kodratech'
+    'Hola,\n\nEstaba analizando negocios del giro de {{ACTIVIDAD}} en {{MUNICIPIO}} y me encontré con {{NOMBRE}}.\n\nEn Kodra nos dedicamos a acelerar el crecimiento de empresas a través de desarrollo de software y páginas web a la medida (puedes ver nuestros servicios en https://servicios-kodra.vercel.app/).\n\nQueremos mostrarte un ejemplo real de lo que podemos construir para ti. Esta es una demo interactiva y 100% ajustable a las necesidades específicas de {{NOMBRE}}:\n👉 https://taller-demo-one.vercel.app/\n\nPodemos adaptar un sistema similar para automatizar tus ventas, citas o administración de clientes.\n\n¿Tendría sentido que te preparemos una propuesta rápida para tu negocio sin compromiso?\n\nUn saludo,\n\nEl equipo de Kodra\nhttps://servicios-kodra.vercel.app/'
   );
   
   const [isSending, setIsSending] = useState(false);
