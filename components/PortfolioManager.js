@@ -359,38 +359,39 @@ export default function PortfolioManager({
                 </h2>
                 <span className="subtitle">Llamadas y seguimiento de prospectos</span>
               </div>
-              <button 
-                onClick={exportToCSV} 
-                className="btn-action btn-secondary btn-export" 
-                disabled={companies.length === 0}
-                title="Exportar a Excel"
-              >
-                Exportar a CSV
-              </button>
-              <button 
-                onClick={() => handleOpenDialer(false)} 
-                className="btn-action btn-primary btn-dialer"
-                disabled={companies.length === 0}
-              >
-                Call Center (Todos)
-              </button>
-              <button 
-                onClick={() => handleOpenDialer(true)} 
-                className="btn-action btn-primary btn-dialer"
-                disabled={companies.length === 0}
-                title="Solo prospectos con teléfono o email"
-              >
-                Call Center (Con Contacto)
-              </button>
-              <button 
-                onClick={() => setIsEmailModalOpen(true)} 
-                className="btn-action btn-primary btn-email"
-                disabled={companies.length === 0}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                Enviar Correo Masivo
-              </button>
+              <div className="header-actions">
+                <button 
+                  onClick={exportToCSV} 
+                  className="btn-action btn-secondary btn-export" 
+                  disabled={companies.length === 0}
+                  title="Exportar a Excel"
+                >
+                  Exportar a CSV
+                </button>
+                <button 
+                  onClick={() => handleOpenDialer(false)} 
+                  className="btn-action btn-primary btn-dialer"
+                  disabled={companies.length === 0}
+                >
+                  Call Center (Todos)
+                </button>
+                <button 
+                  onClick={() => handleOpenDialer(true)} 
+                  className="btn-action btn-primary btn-dialer"
+                  disabled={companies.length === 0}
+                  title="Solo prospectos con teléfono o email"
+                >
+                  Call Center (Con Contacto)
+                </button>
+                <button 
+                  onClick={() => setIsEmailModalOpen(true)} 
+                  className="btn-action btn-primary btn-email"
+                  disabled={companies.length === 0}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  Enviar Correo Masivo
+                </button>
+              </div>
             </div>
 
             {/* Sub-tabs switcher */}
@@ -894,7 +895,7 @@ color: var(--accent-primary-text);
           margin-bottom: 20px;
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
         }
         .header-title-group {
           display: flex;
@@ -909,11 +910,17 @@ color: var(--accent-primary-text);
           font-size: 12.5px;
           color: var(--text-secondary);
         }
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
         .btn-export {
           background: rgba(16, 185, 129, 0.1);
           color: #10b981;
-          border-color: rgba(16, 185, 129, 0.3);
-          padding: 8px 12px;
+          border: 1px solid rgba(16, 185, 129, 0.2);
+          padding: 8px 14px;
           font-size: 12px;
           font-weight: 600;
           border-radius: var(--radius-sm);
@@ -929,22 +936,45 @@ color: var(--accent-primary-text);
           cursor: not-allowed;
         }
         .btn-dialer {
-          margin-left: 10px;
           background: var(--accent-primary);
-color: var(--accent-primary-text);
-          padding: 8px 12px;
+          color: var(--accent-primary-text);
+          border: 1px solid transparent;
+          padding: 8px 14px;
           font-size: 12px;
           font-weight: 600;
           border-radius: var(--radius-sm);
           cursor: pointer;
-          border: none;
           transition: var(--transition-fast);
         }
         .btn-dialer:hover:not(:disabled) {
           background: #4f46e5;
+          color: #ffffff;
           box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
         }
         .btn-dialer:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .btn-email {
+          background: var(--accent-primary);
+          color: var(--accent-primary-text);
+          border: 1px solid transparent;
+          padding: 8px 14px;
+          font-size: 12px;
+          font-weight: 600;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          transition: var(--transition-fast);
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .btn-email:hover:not(:disabled) {
+          background: #4f46e5;
+          color: #ffffff;
+          box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+        }
+        .btn-email:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
@@ -1277,16 +1307,14 @@ color: var(--accent-primary-text);
           .panel-header h2 {
             font-size: 18px;
           }
+          .header-actions {
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+          }
           .btn-action {
             width: 100%;
             text-align: center;
-          }
-          .btn-export {
-            margin-bottom: 4px;
-          }
-          .btn-dialer {
-            margin-left: 0;
-            margin-bottom: 4px;
           }
           .crm-filters-bar {
             flex-direction: column;
