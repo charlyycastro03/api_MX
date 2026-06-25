@@ -45,7 +45,7 @@ export async function GET(request) {
         FROM email_campaigns ec
         LEFT JOIN email_logs el ON ec.id = el.campaign_id
         WHERE ec.portfolio_id = $1
-        GROUP BY ec.id
+        GROUP BY ec.id, ec.portfolio_id, ec.subject, ec.body, ec.created_at
         ORDER BY ec.id DESC`,
         [parseInt(portfolioId, 10)]
       );
