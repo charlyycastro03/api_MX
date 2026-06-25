@@ -65,15 +65,15 @@ export async function POST(request) {
   try {
     const { portfolioId, subject, body } = await request.json();
 
-    if (!portfolioId || !subject || !body) {
-      return NextResponse.json({ error: 'portfolioId, subject y body son requeridos' }, { status: 400 });
+    if (!subject || !body) {
+      return NextResponse.json({ error: 'subject y body son requeridos' }, { status: 400 });
     }
 
     const { rows } = await pool.query(
       `INSERT INTO email_campaigns (portfolio_id, subject, body) 
        VALUES ($1, $2, $3) 
        RETURNING id, portfolio_id, subject, body, created_at`,
-      [parseInt(portfolioId, 10), subject, body]
+      [portfolioId ? parseInt(portfolioId, 10) : null, subject, body]
     );
 
     return NextResponse.json({ success: true, campaign: rows[0] });

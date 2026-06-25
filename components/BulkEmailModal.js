@@ -14,6 +14,30 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
   const [currentSendingIndex, setCurrentSendingIndex] = useState(-1);
   const isPausedRef = useRef(true);
 
+  // Direct sending options (when opened outside CRM)
+  const [portfolios, setPortfolios] = useState([]);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState('');
+  const [newPortfolioName, setNewPortfolioName] = useState('');
+  const [isCreatingPortfolio, setIsCreatingPortfolio] = useState(false);
+
+  // Load portfolios list if portfolioId is not provided (direct search sending)
+  useEffect(() => {
+    if (isOpen && !portfolioId) {
+      async function fetchPortfolios() {
+        try {
+          const res = await fetch('/api/portfolios');
+          if (res.ok) {
+            const data = await res.json();
+            setPortfolios(data || []);
+          }
+        } catch (err) {
+          console.error('Error fetching portfolios in modal:', err);
+        }
+      }
+      fetchPortfolios();
+    }
+  }, [isOpen, portfolioId]);
+
   // Filter companies that have an email when modal opens or companies prop changes
   useEffect(() => {
     if (isOpen && companies) {
@@ -36,7 +60,8 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
             estrato,
             phone,
             status: 'pending', // 'pending' | 'sending' | 'sent' | 'error'
-            errorMsg: ''
+            errorMsg: '',
+            originalCompany: c // Keep original reference for saving later
           };
         })
         .filter(c => c.email !== '' && c.email.includes('@'));
@@ -70,6 +95,69 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
       .join('');
   };
 
+  const handleCreatePortfolioInModal = async () => {
+    if (!newPortfolioName.trim()) return;
+    try {
+      const res = await fetch('/api/portfolios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newPortfolioName.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        setPortfolios(prev => [...prev, data]);
+        setSelectedPortfolioId(data.id);
+        setIsCreatingPortfolio(false);
+        setNewPortfolioName('');
+      } else {
+        alert(data.error || 'Error al crear el portafolio');
+      }
+    } catch (err) {
+      console.error('Error creating portfolio in modal:', err);
+      alert('Error de conexión');
+    }
+  };
+
+  const saveRecipientToDb = async (recipient, targetPortfolioId) => {
+    const comp = recipient.originalCompany;
+    if (!comp) return null;
+    
+    const mapped = {
+      denueId: String(comp.Id || comp.id || comp.ID || recipient.id),
+      name: comp.Nombre || comp.name || comp.RazonSocial || comp.Razon_social || recipient.name || '',
+      activity: comp.ClaseActividad || comp.Clase_actividad || comp.activity || recipient.activity || '',
+      phone: comp.Telefono || comp.phone || recipient.phone || '',
+      email: comp.CorreoElectronico || comp.Correo_e || comp.correo_e || comp.email || recipient.email || '',
+      website: comp.SitioInternet || comp.Sitio_internet || comp.sitio_internet || comp.website || '',
+      address: comp.address || comp.Ubicacion || `${comp.Calle || ''} ${comp.NumExterior || ''}, ${comp.Colonia || ''}, ${comp.Municipio || ''}, ${comp.Entidad || ''}`,
+      latitude: parseFloat(comp.Latitud || comp.latitude || comp.Latitude || 0),
+      longitude: parseFloat(comp.Longitud || comp.longitude || comp.Longitude || 0),
+      portfolioId: parseInt(targetPortfolioId, 10)
+    };
+
+    try {
+      const res = await fetch('/api/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mapped)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        return data.id;
+      } else if (res.status === 400 && data.error && data.error.includes('ya está guardada')) {
+        const listRes = await fetch(`/api/companies?portfolioId=${targetPortfolioId}`);
+        if (listRes.ok) {
+          const list = await listRes.json();
+          const match = list.find(c => String(c.denue_id) === String(mapped.denueId));
+          if (match) return match.id;
+        }
+      }
+    } catch (err) {
+      console.error('Error saving recipient to portfolio:', err);
+    }
+    return null;
+  };
+
   const handleStartSending = async () => {
     if (recipients.length === 0) return;
     
@@ -77,6 +165,8 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
     isPausedRef.current = false;
     
     let activeCampaignId = campaignId;
+    let targetPortId = portfolioId || selectedPortfolioId;
+
     if (!activeCampaignId) {
       try {
         const res = await fetch('/api/email/campaigns', {
@@ -85,7 +175,7 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            portfolioId: portfolioId,
+            portfolioId: targetPortId ? parseInt(targetPortId, 10) : null,
             subject: subjectTemplate,
             body: bodyTemplate
           })
@@ -137,8 +227,16 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
     const bodyText = compileTemplate(bodyTemplate, recipient);
     const bodyHtml = getHtmlBody(bodyText);
 
-    // Si es un portafolio, mandamos el ID del negocio. Si es libre, null
-    const companyIdToSend = portfolioId ? recipient.id : null;
+    // Si es un portafolio, mandamos el ID del negocio. Si es libre, lo guardamos al vuelo si se seleccionó portafolio
+    let companyIdToSend = portfolioId ? recipient.id : null;
+    let targetPortId = portfolioId || selectedPortfolioId;
+
+    if (targetPortId && !portfolioId) {
+      const dbId = await saveRecipientToDb(recipient, targetPortId);
+      if (dbId) {
+        companyIdToSend = dbId;
+      }
+    }
 
     try {
       const response = await fetch('/api/email/send', {
@@ -355,6 +453,55 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
                 </div>
               </div>
             </div>
+
+            {!portfolioId && (
+              <div className="portfolio-select-section">
+                <h4>Asociar a Portafolio (CRM)</h4>
+                <p className="helper-desc">Guarda y asocia los envíos a un portafolio de tu CRM automáticamente.</p>
+                
+                <div className="portfolio-options">
+                  <select 
+                    value={selectedPortfolioId} 
+                    onChange={(e) => {
+                      setSelectedPortfolioId(e.target.value);
+                      if (e.target.value === 'new') {
+                        setIsCreatingPortfolio(true);
+                      } else {
+                        setIsCreatingPortfolio(false);
+                      }
+                    }}
+                    disabled={isSending}
+                    className="portfolio-modal-select"
+                  >
+                    <option value="">-- No guardar (Envío libre) --</option>
+                    <option value="new">+ Crear nuevo portafolio...</option>
+                    {portfolios.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.company_count} pros.)</option>
+                    ))}
+                  </select>
+
+                  {isCreatingPortfolio && (
+                    <div className="new-portfolio-modal-input-group">
+                      <input 
+                        type="text" 
+                        placeholder="Nombre de portafolio..."
+                        value={newPortfolioName}
+                        onChange={(e) => setNewPortfolioName(e.target.value)}
+                        disabled={isSending}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleCreatePortfolioInModal}
+                        disabled={isSending || !newPortfolioName.trim()}
+                        className="btn-create-modal"
+                      >
+                        Crear
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Campaign controls */}
             <div className="controls-section">
@@ -928,6 +1075,76 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
 
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        .portfolio-select-section {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-md);
+          padding: 12px 14px;
+          margin-bottom: 16px;
+        }
+        .portfolio-select-section h4 {
+          font-size: 12.5px;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 4px;
+        }
+        .portfolio-select-section .helper-desc {
+          font-size: 11px;
+          color: var(--text-muted);
+          line-height: 1.3;
+          margin-bottom: 10px;
+        }
+        .portfolio-modal-select {
+          width: 100%;
+          background: var(--bg-secondary);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-sm);
+          color: var(--text-primary);
+          padding: 8px 10px;
+          font-size: 13px;
+          outline: none;
+          cursor: pointer;
+        }
+        .portfolio-modal-select:focus {
+          border-color: var(--text-primary);
+        }
+        .new-portfolio-modal-input-group {
+          display: flex;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        .new-portfolio-modal-input-group input {
+          flex: 1;
+          background: var(--bg-tertiary);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-sm);
+          color: var(--text-primary);
+          padding: 6px 10px;
+          font-size: 13px;
+          outline: none;
+        }
+        .new-portfolio-modal-input-group input:focus {
+          border-color: var(--text-primary);
+        }
+        .btn-create-modal {
+          background: var(--text-primary);
+          color: var(--bg-primary);
+          border: none;
+          border-radius: var(--radius-sm);
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: var(--transition-fast);
+        }
+        .btn-create-modal:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+        .btn-create-modal:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       `}</style>
     </div>
