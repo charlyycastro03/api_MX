@@ -238,6 +238,25 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
       }
     }
 
+    // Auto-generate interest tracking URL if we have a company ID and campaign ID
+    let finalBodyHtml = bodyHtml;
+    let finalBodyText = bodyText;
+    if (companyIdToSend && activeCampaignId) {
+      const trackingUrl = `https://api-mx.vercel.app/api/email/interest?companyId=${companyIdToSend}&campaignId=${activeCampaignId}`;
+      
+      finalBodyHtml += `
+        <br/><br/>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" 
+             style="background-color: #6366f1; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-family: sans-serif; display: inline-block; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35);">
+            Sí, me interesa recibir una propuesta sin compromiso
+          </a>
+        </div>
+      `;
+
+      finalBodyText += `\n\n¿Te interesa? Solicita tu propuesta rápida aquí:\n👉 ${trackingUrl}`;
+    }
+
     try {
       const response = await fetch('/api/email/send', {
         method: 'POST',
@@ -247,8 +266,8 @@ export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId
         body: JSON.stringify({
           to: recipient.email,
           subject: subject,
-          html: bodyHtml,
-          text: bodyText,
+          html: finalBodyHtml,
+          text: finalBodyText,
           campaignId: activeCampaignId,
           companyId: companyIdToSend
         })
