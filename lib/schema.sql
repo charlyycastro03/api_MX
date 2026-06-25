@@ -41,3 +41,21 @@ CREATE TABLE IF NOT EXISTS call_logs (
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS email_campaigns (
+  id SERIAL PRIMARY KEY,
+  portfolio_id INT REFERENCES portfolios(id) ON DELETE CASCADE,
+  subject VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS email_logs (
+  id SERIAL PRIMARY KEY,
+  campaign_id INT REFERENCES email_campaigns(id) ON DELETE CASCADE,
+  company_id INT REFERENCES companies(id) ON DELETE CASCADE,
+  recipient_email VARCHAR(100) NOT NULL,
+  status VARCHAR(50) DEFAULT 'sending', -- 'sent', 'error'
+  error_message TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

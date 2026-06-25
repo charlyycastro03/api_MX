@@ -16,6 +16,14 @@ export default function PortfolioManager({
   const [tempNotes, setTempNotes] = useState('');
   const [creating, setCreating] = useState(false);
 
+  // Email Campaign States
+  const [crmSubTab, setCrmSubTab] = useState('companies'); // 'companies' | 'campaigns'
+  const [campaigns, setCampaigns] = useState([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+  const [selectedCampaignForDetail, setSelectedCampaignForDetail] = useState(null);
+  const [campaignLogs, setCampaignLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+
   // Filters
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [filterActivity, setFilterActivity] = useState('');
@@ -63,6 +71,53 @@ export default function PortfolioManager({
 
     fetchCompanies();
   }, [selectedPortfolioId, filterStatus, filterActivity, filterStartDate, filterEndDate]);
+
+  // Fetch campaigns when selectedPortfolioId, crmSubTab, or isEmailModalOpen closes
+  useEffect(() => {
+    if (!selectedPortfolioId || crmSubTab !== 'campaigns') {
+      return;
+    }
+
+    async function fetchCampaigns() {
+      setLoadingCampaigns(true);
+      try {
+        const res = await fetch(`/api/email/campaigns?portfolioId=${selectedPortfolioId}`);
+        if (!res.ok) throw new Error('Error al obtener campañas');
+        const data = await res.json();
+        setCampaigns(data.campaigns || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    }
+
+    fetchCampaigns();
+  }, [selectedPortfolioId, crmSubTab, isEmailModalOpen]);
+
+  // Fetch logs when a campaign is selected for detailed view
+  useEffect(() => {
+    if (!selectedCampaignForDetail) {
+      setCampaignLogs([]);
+      return;
+    }
+
+    async function fetchLogs() {
+      setLoadingLogs(true);
+      try {
+        const res = await fetch(`/api/email/campaigns?campaignId=${selectedCampaignForDetail.id}`);
+        if (!res.ok) throw new Error('Error al obtener logs de la campaña');
+        const data = await res.json();
+        setCampaignLogs(data.logs || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingLogs(false);
+      }
+    }
+
+    fetchLogs();
+  }, [selectedCampaignForDetail]);
 
   const handleCreatePortfolio = async (e) => {
     e.preventDefault();
@@ -338,173 +393,248 @@ export default function PortfolioManager({
               </button>
             </div>
 
-            {/* Filters Bar */}
-            <div className="crm-filters-bar glass-panel">
-              <div className="filter-group">
-                <label>Estatus:</label>
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                  <option value="Todos">Todos</option>
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="No contestó">No contestó</option>
-                  <option value="Contactado - Sin interés">Sin interés</option>
-                  <option value="Contactado - Interesado">Interesado</option>
-                </select>
-              </div>
-              <div className="filter-group">
-                <label>Giro Comercial:</label>
-                <input 
-                  type="text" 
-                  placeholder="Ej. restaurante" 
-                  value={filterActivity} 
-                  onChange={(e) => setFilterActivity(e.target.value)} 
-                />
-              </div>
-              <div className="filter-group">
-                <label>Desde:</label>
-                <input 
-                  type="date" 
-                  value={filterStartDate} 
-                  onChange={(e) => setFilterStartDate(e.target.value)} 
-                />
-              </div>
-              <div className="filter-group">
-                <label>Hasta:</label>
-                <input 
-                  type="date" 
-                  value={filterEndDate} 
-                  onChange={(e) => setFilterEndDate(e.target.value)} 
-                />
-              </div>
+            {/* Sub-tabs switcher */}
+            <div className="crm-subtabs">
+              <button 
+                className={`subtab-btn ${crmSubTab === 'companies' ? 'active' : ''}`}
+                onClick={() => setCrmSubTab('companies')}
+              >
+                Prospectos Guardados
+              </button>
+              <button 
+                className={`subtab-btn ${crmSubTab === 'campaigns' ? 'active' : ''}`}
+                onClick={() => setCrmSubTab('campaigns')}
+              >
+                Historial de Campañas
+              </button>
             </div>
 
-            {loadingCompanies ? (
-              <div className="panel-loading">
-                <div className="spinner"></div>
-                <p>Cargando prospectos...</p>
-              </div>
-            ) : companies.length === 0 ? (
-              <div className="panel-empty">
-                <div className="empty-icon">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            {crmSubTab === 'companies' ? (
+              <>
+                {/* Filters Bar */}
+                <div className="crm-filters-bar glass-panel">
+                  <div className="filter-group">
+                    <label>Estatus:</label>
+                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                      <option value="Todos">Todos</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="No contestó">No contestó</option>
+                      <option value="Contactado - Sin interés">Sin interés</option>
+                      <option value="Contactado - Interesado">Interesado</option>
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>Giro Comercial:</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ej. restaurante" 
+                      value={filterActivity} 
+                      onChange={(e) => setFilterActivity(e.target.value)} 
+                    />
+                  </div>
+                  <div className="filter-group">
+                    <label>Desde:</label>
+                    <input 
+                      type="date" 
+                      value={filterStartDate} 
+                      onChange={(e) => setFilterStartDate(e.target.value)} 
+                    />
+                  </div>
+                  <div className="filter-group">
+                    <label>Hasta:</label>
+                    <input 
+                      type="date" 
+                      value={filterEndDate} 
+                      onChange={(e) => setFilterEndDate(e.target.value)} 
+                    />
+                  </div>
                 </div>
-                <p>Este portafolio está vacío.</p>
-                <span className="help-text">Realiza una búsqueda de empresas en la API y utiliza la opción "Guardar" para añadirlas aquí.</span>
-              </div>
-            ) : (
-              <div className="crm-list">
-                {companies.map((company) => (
-                  <div key={company.id} className="crm-card">
-                    <div className="crm-card-header">
-                      <div className="company-meta">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <h3>{company.name}</h3>
-                          {renderStatusBadge(company.call_status)}
-                        </div>
-                        <span className="activity-tag">{company.activity}</span>
-                        {company.address && <p className="address-sub">{company.address}</p>}
-                      </div>
-                      <div className="crm-card-actions">
-                        <button 
-                          onClick={() => onSelectCompany(company)}
-                          className="btn-icon btn-locate"
-                          title="Ubicar en Mapa"
-                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteCompany(company.id)}
-                          className="btn-icon btn-delete-company"
-                          title="Eliminar de la lista"
-                        >
-                          ✕
-                        </button>
-                      </div>
+
+                {loadingCompanies ? (
+                  <div className="panel-loading">
+                    <div className="spinner"></div>
+                    <p>Cargando prospectos...</p>
+                  </div>
+                ) : companies.length === 0 ? (
+                  <div className="panel-empty">
+                    <div className="empty-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                     </div>
-
-                    <div className="crm-card-body">
-                      {/* Contacts details */}
-                      <div className="contact-details">
-                        {company.phone && (
-                          <div className="contact-item">
-                            <span className="label">Teléfono:</span>
-                            <a href={`tel:${cleanPhone(company.phone)}`} className="phone-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#34d399'}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                              {company.phone}
-                            </a>
+                    <p>Este portafolio está vacío.</p>
+                    <span className="help-text">Realiza una búsqueda de empresas en la API y utiliza la opción "Guardar" para añadirlas aquí.</span>
+                  </div>
+                ) : (
+                  <div className="crm-list">
+                    {companies.map((company) => (
+                      <div key={company.id} className="crm-card">
+                        <div className="crm-card-header">
+                          <div className="company-meta">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <h3>{company.name}</h3>
+                              {renderStatusBadge(company.call_status)}
+                            </div>
+                            <span className="activity-tag">{company.activity}</span>
+                            {company.address && <p className="address-sub">{company.address}</p>}
                           </div>
-                        )}
-                        {company.email && (
-                          <div className="contact-item">
-                            <span className="label">Correo:</span>
-                            <a href={`mailto:${company.email}`} className="email-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#fb923c'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                              {company.email}
-                            </a>
+                          <div className="crm-card-actions">
+                            <button 
+                              onClick={() => onSelectCompany(company)}
+                              className="btn-icon btn-locate"
+                              title="Ubicar en Mapa"
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteCompany(company.id)}
+                              className="btn-icon btn-delete-company"
+                              title="Eliminar de la lista"
+                            >
+                              ✕
+                            </button>
                           </div>
-                        )}
-                        {company.website && (
-                          <div className="contact-item">
-                            <span className="label">Web:</span>
-                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer" className="web-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                              Sitio Web
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* CRM Status & Notes */}
-                      <div className="crm-flow">
-                        <div className="status-selector">
-                          <label className="label">Estado de Llamada:</label>
-                          <select
-                            value={company.call_status}
-                            onChange={(e) => handleCallStatusChange(company.id, e.target.value)}
-                            className={`select-status ${getStatusClass(company.call_status)}`}
-                          >
-                            <option value="Pendiente">Pendiente</option>
-                            <option value="No contestó">No contestó</option>
-                            <option value="Contactado - Sin interés">Sin interés</option>
-                            <option value="Contactado - Interesado">Interesado</option>
-                          </select>
                         </div>
 
-                        <div className="notes-editor">
-                          <label className="label">Notas de Seguimiento:</label>
-                          {editingNotesId === company.id ? (
-                            <div className="notes-editing-box">
-                              <textarea
-                                value={tempNotes}
-                                onChange={(e) => setTempNotes(e.target.value)}
-                                onBlur={() => handleSaveNotes(company.id)}
-                                placeholder="Escribe el resultado de la llamada..."
-                                rows={3}
-                                autoFocus
-                              />
+                        <div className="crm-card-body">
+                          {/* Contacts details */}
+                          <div className="contact-details">
+                            {company.phone && (
+                              <div className="contact-item">
+                                <span className="label">Teléfono:</span>
+                                <a href={`tel:${cleanPhone(company.phone)}`} className="phone-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#34d399'}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                  {company.phone}
+                                </a>
+                              </div>
+                            )}
+                            {company.email && (
+                              <div className="contact-item">
+                                <span className="label">Correo:</span>
+                                <a href={`mailto:${company.email}`} className="email-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#fb923c'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                  {company.email}
+                                </a>
+                              </div>
+                            )}
+                            {company.website && (
+                              <div className="contact-item">
+                                <span className="label">Web:</span>
+                                <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer" className="web-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#6366f1'}}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                  Sitio Web
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* CRM Status & Notes */}
+                          <div className="crm-flow">
+                            <div className="status-selector">
+                              <label className="label">Estado de Llamada:</label>
+                              <select
+                                value={company.call_status}
+                                onChange={(e) => handleCallStatusChange(company.id, e.target.value)}
+                                className={`select-status ${getStatusClass(company.call_status)}`}
+                              >
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="No contestó">No contestó</option>
+                                <option value="Contactado - Sin interés">Sin interés</option>
+                                <option value="Contactado - Interesado">Interesado</option>
+                              </select>
                             </div>
-                          ) : (
-                            <div 
-                              className="notes-display-box"
-                              onClick={() => handleStartEditingNotes(company.id, company.notes)}
-                            >
-                              {company.notes ? (
-                                <p className="notes-text">{company.notes}</p>
+
+                            <div className="notes-editor">
+                              <label className="label">Notas de Seguimiento:</label>
+                              {editingNotesId === company.id ? (
+                                <div className="notes-editing-box">
+                                  <textarea
+                                    value={tempNotes}
+                                    onChange={(e) => setTempNotes(e.target.value)}
+                                    onBlur={() => handleSaveNotes(company.id)}
+                                    placeholder="Escribe el resultado de la llamada..."
+                                    rows={3}
+                                    autoFocus
+                                  />
+                                </div>
                               ) : (
-                                <span className="notes-placeholder">Haz clic para agregar notas de seguimiento...</span>
+                                <div 
+                                  className="notes-display-box"
+                                  onClick={() => handleStartEditingNotes(company.id, company.notes)}
+                                >
+                                  {company.notes ? (
+                                    <p className="notes-text">{company.notes}</p>
+                                  ) : (
+                                    <span className="notes-placeholder">Haz clic para agregar notas de seguimiento...</span>
+                                  )}
+                                  <span className="edit-hint" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                    Editar
+                                  </span>
+                                </div>
                               )}
-                              <span className="edit-hint" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                Editar
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {loadingCampaigns ? (
+                  <div className="panel-loading">
+                    <div className="spinner"></div>
+                    <p>Cargando historial de campañas...</p>
+                  </div>
+                ) : campaigns.length === 0 ? (
+                  <div className="panel-empty">
+                    <div className="empty-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    </div>
+                    <p>No se han enviado campañas de correo aún.</p>
+                    <span className="help-text">Haz clic en "Enviar Correo Masivo" en la parte superior para crear e iniciar tu primera campaña para este portafolio.</span>
+                  </div>
+                ) : (
+                  <div className="campaigns-list">
+                    {campaigns.map((campaign) => {
+                      const successRate = campaign.total_emails > 0 
+                        ? Math.round((campaign.sent_emails / campaign.total_emails) * 100) 
+                        : 0;
+                      return (
+                        <div key={campaign.id} className="campaign-card glass-panel" onClick={() => setSelectedCampaignForDetail(campaign)}>
+                          <div className="campaign-card-header">
+                            <div className="campaign-meta">
+                              <h3>{campaign.subject}</h3>
+                              <span className="date-tag">
+                                {new Date(campaign.created_at).toLocaleString('es-MX', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
                               </span>
                             </div>
-                          )}
+                            <div className="campaign-stats-pill">
+                              <span className="success-percent">{successRate}% Éxito</span>
+                              <span className="success-ratio">({campaign.sent_emails}/{campaign.total_emails})</span>
+                            </div>
+                          </div>
+                          <div className="campaign-card-body">
+                            <p className="body-preview">{campaign.body.substring(0, 120)}{campaign.body.length > 120 ? '...' : ''}</p>
+                            {campaign.error_emails > 0 && (
+                              <span className="error-pill">
+                                {campaign.error_emails} con error
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </>
         ) : (
@@ -524,6 +654,96 @@ export default function PortfolioManager({
           onClose={() => setShowDialer(false)} 
           onUpdateCompany={handleUpdateCompany} 
         />
+      )}
+
+      {selectedCampaignForDetail && (
+        <div className="campaign-detail-overlay" onClick={() => setSelectedCampaignForDetail(null)}>
+          <div className="campaign-detail-modal glass-panel animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="detail-header">
+              <div>
+                <h3>Detalle de Campaña</h3>
+                <p className="subtitle">Historial de envíos y errores en tiempo real</p>
+              </div>
+              <button className="btn-close" onClick={() => setSelectedCampaignForDetail(null)}>
+                &times;
+              </button>
+            </div>
+            
+            <div className="detail-content">
+              {/* Left column: Message template preview */}
+              <div className="detail-left-pane">
+                <div className="message-preview-box">
+                  <div className="preview-label">Asunto del Correo</div>
+                  <div className="preview-value subject">{selectedCampaignForDetail.subject}</div>
+                  
+                  <div className="preview-label">Cuerpo del Mensaje</div>
+                  <div className="preview-value body">
+                    {selectedCampaignForDetail.body.split('\n').map((para, i) => (
+                      <p key={i}>{para || '\u00A0'}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right column: Delivery logs list */}
+              <div className="detail-right-pane">
+                <div className="logs-summary">
+                  <h4>Estado de la Entrega</h4>
+                  <div className="detail-stats-grid">
+                    <div className="stat-card">
+                      <span className="stat-num">{selectedCampaignForDetail.total_emails}</span>
+                      <span className="stat-label">Destinatarios</span>
+                    </div>
+                    <div className="stat-card success">
+                      <span className="stat-num">{selectedCampaignForDetail.sent_emails}</span>
+                      <span className="stat-label">Enviados</span>
+                    </div>
+                    <div className="stat-card error">
+                      <span className="stat-num">{selectedCampaignForDetail.error_emails}</span>
+                      <span className="stat-label">Errores</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="logs-list-container">
+                  <h5>Registros de Envío</h5>
+                  {loadingLogs ? (
+                    <div className="logs-loading">
+                      <div className="spinner-small"></div>
+                      <span>Cargando registros...</span>
+                    </div>
+                  ) : campaignLogs.length === 0 ? (
+                    <div className="logs-empty">
+                      No hay registros de envío para esta campaña.
+                    </div>
+                  ) : (
+                    <div className="logs-scroll">
+                      {campaignLogs.map((log) => (
+                        <div key={log.id} className="log-row-item">
+                          <div className="log-company-info">
+                            <span className="name">{log.company_name || 'Empresa Eliminada'}</span>
+                            <span className="email">{log.recipient_email}</span>
+                          </div>
+                          
+                          <div className="log-status-info">
+                            {log.status === 'sent' ? (
+                              <span className="badge badge-sent">Enviado</span>
+                            ) : (
+                              <div className="error-container">
+                                <span className="badge badge-error">Error</span>
+                                <span className="error-text" title={log.error_message}>{log.error_message}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <style jsx>{`
@@ -1096,11 +1316,351 @@ color: var(--accent-primary-text);
             width: 100%;
           }
         }
+
+        /* Subtabs */
+        .crm-subtabs {
+          display: flex;
+          gap: 15px;
+          margin-bottom: 20px;
+          border-bottom: 1px solid var(--panel-border);
+          padding-bottom: 10px;
+        }
+        .subtab-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-secondary);
+          font-size: 14px;
+          font-weight: 600;
+          padding: 6px 16px;
+          cursor: pointer;
+          position: relative;
+          transition: var(--transition-fast);
+        }
+        .subtab-btn:hover {
+          color: var(--text-primary);
+        }
+        .subtab-btn.active {
+          color: var(--text-primary);
+        }
+        .subtab-btn.active::after {
+          content: '';
+          position: absolute;
+          bottom: -11px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--text-primary);
+        }
+
+        /* Campaigns list */
+        .campaigns-list {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+        .campaign-card {
+          background: rgba(18, 25, 45, 0.4);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-md);
+          padding: 16px;
+          cursor: pointer;
+          transition: var(--transition-normal);
+        }
+        .campaign-card:hover {
+          border-color: rgba(99, 102, 241, 0.3);
+          background: rgba(18, 25, 45, 0.6);
+        }
+        .campaign-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          padding-bottom: 10px;
+          margin-bottom: 10px;
+        }
+        .campaign-meta h3 {
+          font-size: 14.5px;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 4px;
+        }
+        .date-tag {
+          font-size: 11px;
+          color: var(--text-muted);
+        }
+        .campaign-stats-pill {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+        }
+        .success-percent {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--accent-success);
+          background: rgba(74, 222, 128, 0.1);
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+        .success-ratio {
+          font-size: 10.5px;
+          color: var(--text-secondary);
+        }
+        .campaign-card-body {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 20px;
+        }
+        .body-preview {
+          font-size: 12.5px;
+          color: var(--text-secondary);
+          line-height: 1.4;
+          flex: 1;
+        }
+        .error-pill {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--accent-danger);
+          background: rgba(248, 113, 113, 0.1);
+          padding: 2px 8px;
+          border-radius: 4px;
+          white-space: nowrap;
+        }
+
+        /* Campaign Detail Modal */
+        .campaign-detail-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(8px);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .campaign-detail-modal {
+          background: var(--bg-primary);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-lg);
+          width: 100%;
+          max-width: 1000px;
+          height: 80vh;
+          max-height: 750px;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+          overflow: hidden;
+        }
+        .detail-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 25px;
+          background: rgba(255, 255, 255, 0.02);
+          border-bottom: 1px solid var(--panel-border);
+        }
+        .detail-header h3 {
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 4px;
+        }
+        .detail-header .subtitle {
+          font-size: 13px;
+          color: var(--text-secondary);
+        }
+        .detail-content {
+          display: grid;
+          grid-template-columns: 1.1fr 1fr;
+          height: calc(100% - 81px);
+          overflow: hidden;
+        }
+        .detail-left-pane {
+          border-right: 1px solid var(--panel-border);
+          display: flex;
+          flex-direction: column;
+          padding: 20px;
+          overflow-y: auto;
+        }
+        .message-preview-box {
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-md);
+          padding: 16px;
+        }
+        .preview-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 6px;
+        }
+        .preview-value {
+          background: var(--bg-secondary);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-sm);
+          padding: 10px 14px;
+          color: var(--text-primary);
+          font-size: 13.5px;
+          margin-bottom: 16px;
+        }
+        .preview-value.subject {
+          font-weight: 600;
+        }
+        .preview-value.body {
+          white-space: pre-wrap;
+          line-height: 1.5;
+          min-height: 250px;
+          font-family: inherit;
+        }
+        .detail-right-pane {
+          display: flex;
+          flex-direction: column;
+          padding: 20px;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.01);
+        }
+        .logs-summary {
+          margin-bottom: 20px;
+        }
+        .logs-summary h4 {
+          font-size: 14px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: var(--text-primary);
+        }
+        .detail-stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 10px;
+        }
+        .stat-card.error .stat-num {
+          color: var(--accent-danger);
+        }
+        .logs-list-container {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          overflow: hidden;
+        }
+        .logs-list-container h5 {
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 10px;
+          color: var(--text-secondary);
+        }
+        .logs-loading, .logs-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 40px 20px;
+          color: var(--text-secondary);
+          font-size: 13px;
+        }
+        .logs-scroll {
+          flex: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding-right: 4px;
+        }
+        .log-row-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 12px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--panel-border);
+          border-radius: var(--radius-sm);
+          gap: 15px;
+        }
+        .log-company-info {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+        .log-company-info .name {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .log-company-info .email {
+          font-size: 11px;
+          color: var(--text-muted);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .log-status-info {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+        }
+        .badge {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 4px;
+          text-transform: uppercase;
+        }
+        .badge-pending {
+          background: rgba(255, 255, 255, 0.05);
+          color: var(--text-muted);
+        }
+        .badge-sending {
+          background: rgba(99, 102, 241, 0.1);
+          color: var(--accent-primary);
+        }
+        .badge-sent {
+          background: rgba(74, 222, 128, 0.1);
+          color: var(--accent-success);
+        }
+        .badge-error {
+          background: rgba(248, 113, 113, 0.1);
+          color: var(--accent-danger);
+        }
+        .error-container {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+          max-width: 180px;
+        }
+        .error-text {
+          font-size: 10px;
+          color: var(--accent-danger);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 180px;
+        }
+        .spinner-small {
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          border-top-color: currentColor;
+          animation: spin 0.8s linear infinite;
+        }
       `}</style>
       <BulkEmailModal 
         isOpen={isEmailModalOpen} 
         onClose={() => setIsEmailModalOpen(false)} 
         companies={companies} 
+        portfolioId={selectedPortfolioId}
       />
     </div>
   );

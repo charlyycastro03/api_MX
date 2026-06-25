@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function BulkEmailModal({ isOpen, onClose, companies }) {
+export default function BulkEmailModal({ isOpen, onClose, companies, portfolioId = null }) {
   const [recipients, setRecipients] = useState([]);
+  const [campaignId, setCampaignId] = useState(null);
   const [subjectTemplate, setSubjectTemplate] = useState('Una idea digital para {{NOMBRE}} (desde {{MUNICIPIO}})');
   const [bodyTemplate, setBodyTemplate] = useState(
     'Hola,\n\nEstaba analizando negocios del giro de {{ACTIVIDAD}} en {{MUNICIPIO}} y me encontré con {{NOMBRE}}.\n\nEn Kodra nos dedicamos a acelerar el crecimiento de empresas a través de desarrollo de software y páginas web a la medida (puedes ver nuestros servicios en https://servicios-kodra.vercel.app/).\n\nQueremos mostrarte un ejemplo real de lo que podemos construir para ti. Esta es una demo interactiva y 100% ajustable a las necesidades específicas de {{NOMBRE}}:\n👉 https://taller-demo-one.vercel.app/\n\nPodemos adaptar un sistema similar para automatizar tus ventas, citas o administración de clientes.\n\n¿Tendría sentido que te preparemos una propuesta rápida para tu negocio sin compromiso?\n\nUn saludo,\n\nEl equipo de Kodra\nhttps://servicios-kodra.vercel.app/'
@@ -45,6 +46,7 @@ export default function BulkEmailModal({ isOpen, onClose, companies }) {
       isPausedRef.current = true;
       setSendingProgress(0);
       setCurrentSendingIndex(-1);
+      setCampaignId(null);
     }
   }, [isOpen, companies]);
 
@@ -74,6 +76,30 @@ export default function BulkEmailModal({ isOpen, onClose, companies }) {
     setIsSending(true);
     isPausedRef.current = false;
     
+    let activeCampaignId = campaignId;
+    if (!activeCampaignId) {
+      try {
+        const res = await fetch('/api/email/campaigns', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            portfolioId: portfolioId,
+            subject: subjectTemplate,
+            body: bodyTemplate
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          activeCampaignId = data.campaign.id;
+          setCampaignId(activeCampaignId);
+        }
+      } catch (err) {
+        console.error('Error al crear campaña en BD:', err);
+      }
+    }
+    
     // Find the next index to process
     let startIndex = recipients.findIndex(r => r.status === 'pending' || r.status === 'error');
     if (startIndex === -1) {
@@ -82,10 +108,10 @@ export default function BulkEmailModal({ isOpen, onClose, companies }) {
       setRecipients(prev => prev.map(r => ({ ...r, status: 'pending', errorMsg: '' })));
     }
 
-    sendEmailsLoop(startIndex);
+    sendEmailsLoop(startIndex, activeCampaignId);
   };
 
-  const sendEmailsLoop = async (index) => {
+  const sendEmailsLoop = async (index, activeCampaignId) => {
     if (index >= recipients.length || isPausedRef.current) {
       if (isPausedRef.current) {
         setIsSending(false);
@@ -111,6 +137,9 @@ export default function BulkEmailModal({ isOpen, onClose, companies }) {
     const bodyText = compileTemplate(bodyTemplate, recipient);
     const bodyHtml = getHtmlBody(bodyText);
 
+    // Si es un portafolio, mandamos el ID del negocio. Si es libre, null
+    const companyIdToSend = portfolioId ? recipient.id : null;
+
     try {
       const response = await fetch('/api/email/send', {
         method: 'POST',
@@ -121,7 +150,9 @@ export default function BulkEmailModal({ isOpen, onClose, companies }) {
           to: recipient.email,
           subject: subject,
           html: bodyHtml,
-          text: bodyText
+          text: bodyText,
+          campaignId: activeCampaignId,
+          companyId: companyIdToSend
         })
       });
 
@@ -156,7 +187,7 @@ export default function BulkEmailModal({ isOpen, onClose, companies }) {
 
     // Wait a brief moment to avoid overloading SMTP server too fast (1.5 seconds delay)
     setTimeout(() => {
-      sendEmailsLoop(index + 1);
+      sendEmailsLoop(index + 1, activeCampaignId);
     }, 1500);
   };
 
