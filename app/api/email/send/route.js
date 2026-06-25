@@ -22,6 +22,7 @@ export async function POST(request) {
     const pass = process.env.SMTP_PASS;
     const secure = process.env.SMTP_SECURE === 'true';
     const fromName = process.env.SMTP_FROM_NAME || 'Soporte';
+    const fromEmail = process.env.SMTP_FROM || user;
 
     if (!host || !port || !user || !pass) {
       return NextResponse.json(
@@ -47,7 +48,7 @@ export async function POST(request) {
 
     // Enviar el correo electrónico
     const info = await transporter.sendMail({
-      from: `"${fromName}" <${user}>`,
+      from: `"${fromName}" <${fromEmail}>`,
       to,
       subject,
       text: text || '',
